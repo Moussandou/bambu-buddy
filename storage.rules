@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================
+    // Helper Functions
+    // ============================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidImageSize() {
+      // Max 5MB per image
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // ============================================
+    // User Profile Images
+    // ============================================
+
+    match /users/{userId}/profile/{imageName} {
+      allow read: if true; // public read
+      allow write: if isOwner(userId)
+                   && isValidImageType()
+                   && isValidImageSize();
+    }
+
+    // ============================================
+    // Filament Images
+    // ============================================
+
+    match /filaments/{userId}/{filamentId}/{imageName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   && isValidImageType()
+                   && isValidImageSize();
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // Job/Print Images
+    // ============================================
+
+    match /jobs/{userId}/{jobId}/{imageName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   && isValidImageType()
+                   && isValidImageSize();
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // Default: Deny all other access
+    // ============================================
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
