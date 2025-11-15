@@ -24,6 +24,8 @@ export function StockModal({ isOpen, onClose, onSubmit, filament, mode }: StockM
 
     try {
       await onSubmit(grams, notes || undefined);
+      // Petit délai pour laisser Firestore propager les changements
+      await new Promise(resolve => setTimeout(resolve, 500));
       setGrams(50);
       setNotes('');
       onClose();

@@ -56,6 +56,8 @@ export function FilamentForm({ isOpen, onClose, onSubmit, filament }: FilamentFo
 
     try {
       await onSubmit(formData);
+      // Petit délai pour laisser Firestore propager les changements
+      await new Promise(resolve => setTimeout(resolve, 500));
       onClose();
     } catch (error) {
       console.error('Error submitting filament:', error);
