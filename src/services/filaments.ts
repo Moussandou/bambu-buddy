@@ -134,14 +134,17 @@ export async function consumeFilament(
 
   // Log inventory transaction
   const invTransRef = doc(collection(db, COLLECTIONS.INVENTORY_TRANSACTIONS));
-  batch.set(invTransRef, {
+  const invTransaction: Omit<InventoryTransaction, 'id'> = {
     userId,
     filamentId,
     type: 'consume',
     grams: -grams, // négatif pour consommation
-    relatedJobId,
     date: Date.now(),
-  } as InventoryTransaction);
+  };
+  if (relatedJobId) {
+    invTransaction.relatedJobId = relatedJobId;
+  }
+  batch.set(invTransRef, invTransaction);
 
   await batch.commit();
 }
@@ -177,14 +180,17 @@ export async function addFilament(
 
   // Log inventory transaction
   const invTransRef = doc(collection(db, COLLECTIONS.INVENTORY_TRANSACTIONS));
-  batch.set(invTransRef, {
+  const invTransaction: Omit<InventoryTransaction, 'id'> = {
     userId,
     filamentId,
     type: 'add',
     grams,
-    notes,
     date: Date.now(),
-  } as InventoryTransaction);
+  };
+  if (notes) {
+    invTransaction.notes = notes;
+  }
+  batch.set(invTransRef, invTransaction);
 
   await batch.commit();
 }
