@@ -1,4 +1,4 @@
-import { Eye, Edit2, Trash2, Zap } from 'lucide-react';
+import { Edit2, Trash2, Zap } from 'lucide-react';
 import type { Template, Filament } from '../../types';
 import { Card } from '../ui/Card';
 import { FilamentBadge } from '../ui/Badge';

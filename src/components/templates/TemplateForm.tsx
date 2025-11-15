@@ -232,20 +232,54 @@ export function TemplateForm({ isOpen, onClose, onSubmit, template, filaments }:
             placeholder="€"
           />
 
-          <Input
-            label="Durée (h)"
-            type="number"
-            value={formData.printDuration_hours || ''}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                printDuration_hours: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-            min={0}
-            step={0.1}
-            placeholder="heures"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Durée d'impression
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                label=""
+                type="number"
+                value={formData.printDuration_hours ? Math.floor(formData.printDuration_hours) : ''}
+                onChange={(e) => {
+                  const hours = e.target.value ? Number(e.target.value) : 0;
+                  const currentMinutes = formData.printDuration_hours
+                    ? (formData.printDuration_hours % 1) * 60
+                    : 0;
+                  const totalHours = hours + (currentMinutes / 60);
+                  setFormData({
+                    ...formData,
+                    printDuration_hours: totalHours > 0 ? totalHours : undefined,
+                  });
+                }}
+                min={0}
+                step={1}
+                placeholder="Heures"
+              />
+              <Input
+                label=""
+                type="number"
+                value={formData.printDuration_hours
+                  ? Math.round((formData.printDuration_hours % 1) * 60)
+                  : ''}
+                onChange={(e) => {
+                  const minutes = e.target.value ? Number(e.target.value) : 0;
+                  const currentHours = formData.printDuration_hours
+                    ? Math.floor(formData.printDuration_hours)
+                    : 0;
+                  const totalHours = currentHours + (minutes / 60);
+                  setFormData({
+                    ...formData,
+                    printDuration_hours: totalHours > 0 ? totalHours : undefined,
+                  });
+                }}
+                min={0}
+                max={59}
+                step={1}
+                placeholder="Minutes"
+              />
+            </div>
+          </div>
         </div>
 
         <Input

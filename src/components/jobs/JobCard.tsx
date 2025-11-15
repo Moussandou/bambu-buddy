@@ -3,10 +3,11 @@ import type { Job, Filament } from '../../types';
 import { Card } from '../ui/Card';
 import { JobStateBadge, FilamentBadge } from '../ui/Badge';
 import { formatCurrency, formatDuration } from '../../utils/calculations';
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { calculateJobTotalCost } from '../../utils/calculations';
 import { calculatePrintProgress } from '../../lib/utils';
 import { ProgressBar } from '../ui/ProgressBar';
+import { updateJobState } from '../../services/jobs';
 
 interface JobCardProps {
   job: Job;
@@ -42,12 +43,24 @@ export function JobCard({
 
   // Progress tracking for jobs in "en impression" state
   const [progress, setProgress] = useState<number | null>(null);
+  const hasAutoCompleted = useRef(false);
 
   useEffect(() => {
     if (job.state === 'en impression') {
-      const updateProgress = () => {
+      const updateProgress = async () => {
         const newProgress = calculatePrintProgress(job);
         setProgress(newProgress);
+
+        // Auto-complete when reaching 100%
+        if (newProgress !== null && newProgress >= 100 && !hasAutoCompleted.current) {
+          hasAutoCompleted.current = true;
+          try {
+            await updateJobState(job.id, 'fini');
+          } catch (error) {
+            console.error('Error auto-completing job:', error);
+            hasAutoCompleted.current = false;
+          }
+        }
       };
 
       // Update immediately
@@ -58,6 +71,7 @@ export function JobCard({
       return () => clearInterval(interval);
     } else {
       setProgress(null);
+      hasAutoCompleted.current = false;
     }
   }, [job]);
 
@@ -111,7 +125,7 @@ export function JobCard({
                 {progress}%
               </span>
             </div>
-            <ProgressBar progress={progress} size="sm" />
+            <ProgressBar value={progress} size="sm" />
           </div>
         )}
 

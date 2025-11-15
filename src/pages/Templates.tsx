@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, FileText } from 'lucide-react';
 import { orderBy } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
@@ -12,11 +13,14 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
+  incrementTemplateUsage,
 } from '../services/templates';
 import { uploadImages } from '../services/storage';
+import { createJob } from '../services/jobs';
 
 export function Templates() {
   const { userData } = useAuth();
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
@@ -36,7 +40,7 @@ export function Templates() {
   async function handleCreateTemplate(
     data: TemplateFormData,
     newImages: File[],
-    existingImages: string[]
+    _existingImages: string[]
   ) {
     if (!userData) return;
 
@@ -76,8 +80,31 @@ export function Templates() {
   }
 
   async function handleUseTemplate(template: Template) {
-    // This will be implemented to create a job from template
-    alert('Fonctionnalité à venir : créer une impression depuis ce template');
+    if (!userData) return;
+
+    try {
+      // Create job from template
+      const jobData = {
+        title: template.name,
+        description: template.description,
+        filaments: template.filaments,
+        salePrice: template.salePrice,
+        tags: template.tags,
+        printDuration_hours: template.printDuration_hours,
+        quantity: 1,
+      };
+
+      await createJob(userData.uid, jobData, false, [], template.images || []);
+
+      // Increment template usage count
+      await incrementTemplateUsage(template.id);
+
+      // Redirect to Jobs page
+      navigate('/jobs');
+    } catch (error) {
+      console.error('Error creating job from template:', error);
+      alert('Erreur lors de la création de l\'impression depuis le template');
+    }
   }
 
   return (
