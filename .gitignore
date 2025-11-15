@@ -25,7 +25,3 @@ dist-ssr
 
 #env
 .env.local
-
-# Documentation (will be added later)
-*.md
-RECAP.txt
