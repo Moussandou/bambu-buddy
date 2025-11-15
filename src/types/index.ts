@@ -46,6 +46,9 @@ export interface Job {
   salePrice?: number; // prix de vente (si en vente ou vendu)
   tags?: string[]; // ex: ["support", "déco"]
   printDuration_hours?: number; // durée impression (optionnel)
+  quantity?: number; // nombre d'objets à imprimer (défaut: 1)
+  printStartedAt?: number; // timestamp début impression (pour calcul progression)
+  templateId?: string; // ID du template si créé depuis un template
   createdAt: number;
   updatedAt: number;
   soldAt?: number; // timestamp vente
@@ -83,6 +86,21 @@ export interface InventoryTransaction {
   relatedJobId?: string;
   notes?: string;
   date: number;
+}
+
+export interface Template {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  images: string[]; // URLs Firebase Storage
+  filaments: FilamentUsage[];
+  salePrice?: number;
+  tags?: string[];
+  printDuration_hours?: number;
+  timesUsed: number; // Compteur d'utilisation
+  createdAt: number;
+  updatedAt: number;
 }
 
 // ============================================
@@ -131,6 +149,16 @@ export interface FilamentFormData {
 
 export interface JobFormData {
   title: string;
+  description?: string;
+  filaments: FilamentUsage[];
+  salePrice?: number;
+  tags?: string[];
+  printDuration_hours?: number;
+  quantity?: number;
+}
+
+export interface TemplateFormData {
+  name: string;
   description?: string;
   filaments: FilamentUsage[];
   salePrice?: number;

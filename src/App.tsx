@@ -5,6 +5,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Filaments } from './pages/Filaments';
 import { Jobs } from './pages/Jobs';
+import { Templates } from './pages/Templates';
 import { Sales } from './pages/Sales';
 import { Wallet } from './pages/Wallet';
 import { Settings } from './pages/Settings';
@@ -49,6 +50,16 @@ function AppRoutes() {
           <PrivateRoute>
             <Layout>
               <Jobs />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/templates"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <Templates />
             </Layout>
           </PrivateRoute>
         }

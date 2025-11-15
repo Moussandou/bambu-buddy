@@ -1,62 +1,59 @@
 import { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
-import type { Job, JobFormData, Filament, FilamentUsage } from '../../types';
+import type { Template, TemplateFormData, Filament, FilamentUsage } from '../../types';
 import { Modal } from '../ui/Modal';
 import { Input, Textarea } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { FilamentBadge } from '../ui/Badge';
 import { ImageUpload } from '../ui/ImageUpload';
 
-interface JobFormProps {
+interface TemplateFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: JobFormData, newImages: File[], existingImages: string[]) => Promise<void>;
-  job?: Job | null;
+  onSubmit: (data: TemplateFormData, newImages: File[], existingImages: string[]) => Promise<void>;
+  template?: Template | null;
   filaments: Filament[];
 }
 
-export function JobForm({ isOpen, onClose, onSubmit, job, filaments }: JobFormProps) {
+export function TemplateForm({ isOpen, onClose, onSubmit, template, filaments }: TemplateFormProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<JobFormData>({
-    title: '',
+  const [formData, setFormData] = useState<TemplateFormData>({
+    name: '',
     description: '',
     filaments: [],
     salePrice: undefined,
     tags: [],
     printDuration_hours: undefined,
-    quantity: 1,
   });
   const [newImages, setNewImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
 
   // Pré-remplir si édition
   useEffect(() => {
-    if (job) {
+    if (template) {
       setFormData({
-        title: job.title,
-        description: job.description,
-        filaments: job.filaments,
-        salePrice: job.salePrice,
-        tags: job.tags,
-        printDuration_hours: job.printDuration_hours,
-        quantity: job.quantity || 1,
+        name: template.name,
+        description: template.description,
+        filaments: template.filaments,
+        salePrice: template.salePrice,
+        tags: template.tags,
+        printDuration_hours: template.printDuration_hours,
       });
-      setExistingImages(job.images || []);
+      setExistingImages(template.images || []);
       setNewImages([]);
     } else {
       setFormData({
-        title: '',
+        name: '',
         description: '',
         filaments: [],
         salePrice: undefined,
         tags: [],
         printDuration_hours: undefined,
-        quantity: 1,
       });
       setExistingImages([]);
       setNewImages([]);
     }
-  }, [job, isOpen]);
+  }, [template, isOpen]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +63,7 @@ export function JobForm({ isOpen, onClose, onSubmit, job, filaments }: JobFormPr
       await onSubmit(formData, newImages, existingImages);
       onClose();
     } catch (error) {
-      console.error('Error submitting job:', error);
+      console.error('Error submitting template:', error);
       alert('Erreur lors de l\'enregistrement');
     } finally {
       setLoading(false);
@@ -105,7 +102,7 @@ export function JobForm({ isOpen, onClose, onSubmit, job, filaments }: JobFormPr
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={job ? 'Modifier l\'impression' : 'Nouvelle impression'}
+      title={template ? 'Modifier le template' : 'Nouveau template'}
       size="lg"
       footer={
         <>
@@ -113,16 +110,16 @@ export function JobForm({ isOpen, onClose, onSubmit, job, filaments }: JobFormPr
             Annuler
           </Button>
           <Button onClick={handleSubmit} isLoading={loading}>
-            {job ? 'Enregistrer' : 'Créer'}
+            {template ? 'Enregistrer' : 'Créer'}
           </Button>
         </>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Titre"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          label="Nom du template"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
           placeholder="Support téléphone, pot de fleur..."
         />
@@ -219,23 +216,7 @@ export function JobForm({ isOpen, onClose, onSubmit, job, filaments }: JobFormPr
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <Input
-            label="Quantité"
-            type="number"
-            value={formData.quantity || 1}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                quantity: Number(e.target.value),
-              })
-            }
-            min={1}
-            step={1}
-            required
-            helperText="Nombre d'objets identiques"
-          />
-
+        <div className="grid grid-cols-2 gap-4">
           <Input
             label="Prix unitaire (€)"
             type="number"

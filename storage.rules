@@ -59,6 +59,36 @@ service firebase.storage {
       allow delete: if isOwner(userId);
     }
 
+    // Allow nested paths for jobs with timestamps
+    match /jobs/{userId}/{jobTimestamp}/{imageName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   && isValidImageType()
+                   && isValidImageSize();
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // Template Images
+    // ============================================
+
+    match /templates/{userId}/{templateId}/{imageName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   && isValidImageType()
+                   && isValidImageSize();
+      allow delete: if isOwner(userId);
+    }
+
+    // Allow nested paths for templates with timestamps
+    match /templates/{userId}/{templateTimestamp}/{imageName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   && isValidImageType()
+                   && isValidImageSize();
+      allow delete: if isOwner(userId);
+    }
+
     // ============================================
     // Default: Deny all other access
     // ============================================

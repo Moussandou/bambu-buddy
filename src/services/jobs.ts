@@ -18,6 +18,7 @@ import {
 import { db, COLLECTIONS } from '../lib/firebase';
 import type { Job, JobFormData, JobState } from '../types';
 import { consumeFilament } from './filaments';
+import { uploadImages, deleteImages } from './storage';
 
 /**
  * Récupère tous les jobs de l'utilisateur
@@ -78,20 +79,34 @@ export async function getJob(id: string): Promise<Job | null> {
 export async function createJob(
   userId: string,
   data: JobFormData,
-  autoConsumeFilament: boolean = false
+  autoConsumeFilament: boolean = false,
+  imageFiles: File[] = [],
+  existingImageUrls: string[] = []
 ): Promise<string> {
   const now = Date.now();
+
+  // Upload new images if provided
+  let uploadedUrls: string[] = [];
+  if (imageFiles.length > 0) {
+    const basePath = `jobs/${userId}/${now}`;
+    uploadedUrls = await uploadImages(imageFiles, basePath);
+  }
+
+  // Combine existing and uploaded images
+  const finalImageUrls = [...existingImageUrls, ...uploadedUrls];
 
   const job: Omit<Job, 'id'> = {
     userId,
     title: data.title,
     description: data.description,
-    images: [],
+    images: finalImageUrls,
     filaments: data.filaments,
     state: 'en impression',
     salePrice: data.salePrice,
     tags: data.tags || [],
     printDuration_hours: data.printDuration_hours,
+    quantity: data.quantity || 1,
+    printStartedAt: now, // Start tracking time when created
     createdAt: now,
     updatedAt: now,
   };
@@ -100,8 +115,10 @@ export async function createJob(
 
   // Consommer automatiquement le filament si demandé
   if (autoConsumeFilament) {
+    const quantity = data.quantity || 1;
     for (const usage of data.filaments) {
-      await consumeFilament(userId, usage.filamentId, usage.grams, docRef.id);
+      // Multiply by quantity when consuming filament
+      await consumeFilament(userId, usage.filamentId, usage.grams * quantity, docRef.id);
     }
   }
 
@@ -113,14 +130,41 @@ export async function createJob(
  */
 export async function updateJob(
   id: string,
-  data: Partial<Job>
+  data: Partial<JobFormData>,
+  newImageFiles: File[] = [],
+  existingImageUrls: string[] = []
 ): Promise<void> {
   const docRef = doc(db, COLLECTIONS.JOBS, id);
 
-  await updateDoc(docRef, {
+  // Get current job to compare images
+  const currentJob = await getJob(id);
+  if (!currentJob) throw new Error('Job not found');
+
+  // Upload new images if provided
+  let uploadedUrls: string[] = [];
+  if (newImageFiles.length > 0) {
+    const basePath = `jobs/${currentJob.userId}/${id}`;
+    uploadedUrls = await uploadImages(newImageFiles, basePath);
+  }
+
+  // Combine existing and new image URLs
+  const finalImageUrls = [...existingImageUrls, ...uploadedUrls];
+
+  // Delete removed images
+  const imagesToDelete = currentJob.images.filter(
+    (url) => !existingImageUrls.includes(url)
+  );
+  if (imagesToDelete.length > 0) {
+    await deleteImages(imagesToDelete);
+  }
+
+  const updateData: any = {
     ...data,
+    images: finalImageUrls,
     updatedAt: Date.now(),
-  });
+  };
+
+  await updateDoc(docRef, updateData);
 }
 
 /**
@@ -146,9 +190,16 @@ export async function updateJobState(
 }
 
 /**
- * Supprime un job
+ * Supprime un job (et ses images)
  */
 export async function deleteJob(id: string): Promise<void> {
+  // Get job to delete images
+  const job = await getJob(id);
+
+  if (job?.images && job.images.length > 0) {
+    await deleteImages(job.images);
+  }
+
   const docRef = doc(db, COLLECTIONS.JOBS, id);
   await deleteDoc(docRef);
 }

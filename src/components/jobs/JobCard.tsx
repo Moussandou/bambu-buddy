@@ -1,10 +1,12 @@
-import { Eye, Edit2, Trash2 } from 'lucide-react';
+import { Eye, Edit2, Trash2, Package } from 'lucide-react';
 import type { Job, Filament } from '../../types';
 import { Card } from '../ui/Card';
 import { JobStateBadge, FilamentBadge } from '../ui/Badge';
 import { formatCurrency, formatDuration } from '../../utils/calculations';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { calculateJobTotalCost } from '../../utils/calculations';
+import { calculatePrintProgress } from '../../lib/utils';
+import { ProgressBar } from '../ui/ProgressBar';
 
 interface JobCardProps {
   job: Job;
@@ -27,14 +29,37 @@ export function JobCard({
 }: JobCardProps) {
   // Calcul du coût total
   const filamentsMap = useMemo(() => new Map(filaments.map((f) => [f.id, f])), [filaments]);
-  const totalCost = useMemo(
-    () => calculateJobTotalCost(job.filaments, filamentsMap),
-    [job.filaments, filamentsMap]
-  );
-  const profit = job.salePrice ? job.salePrice - totalCost : undefined;
+  const totalCost = useMemo(() => {
+    const baseCost = calculateJobTotalCost(job.filaments, filamentsMap);
+    const quantity = job.quantity || 1;
+    return baseCost * quantity;
+  }, [job.filaments, job.quantity, filamentsMap]);
+
+  const profit = job.salePrice ? (job.salePrice * (job.quantity || 1)) - totalCost : undefined;
 
   // Image principale
   const mainImage = job.images?.[0];
+
+  // Progress tracking for jobs in "en impression" state
+  const [progress, setProgress] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (job.state === 'en impression') {
+      const updateProgress = () => {
+        const newProgress = calculatePrintProgress(job);
+        setProgress(newProgress);
+      };
+
+      // Update immediately
+      updateProgress();
+
+      // Update every minute
+      const interval = setInterval(updateProgress, 60000);
+      return () => clearInterval(interval);
+    } else {
+      setProgress(null);
+    }
+  }, [job]);
 
   return (
     <Card
@@ -56,9 +81,17 @@ export function JobCard({
         {/* Header */}
         <div>
           <div className="flex items-start justify-between mb-2">
-            <h4 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
-              {job.title}
-            </h4>
+            <div className="flex-1">
+              <h4 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
+                {job.title}
+              </h4>
+              {job.quantity && job.quantity > 1 && (
+                <div className="flex items-center gap-1 mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  <Package className="w-3 h-3" />
+                  <span>{job.quantity} exemplaires</span>
+                </div>
+              )}
+            </div>
             <JobStateBadge state={job.state} />
           </div>
 
@@ -68,6 +101,19 @@ export function JobCard({
             </p>
           )}
         </div>
+
+        {/* Progress bar for jobs in "en impression" state */}
+        {progress !== null && (
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-600 dark:text-gray-400">Progression</span>
+              <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">
+                {progress}%
+              </span>
+            </div>
+            <ProgressBar progress={progress} size="sm" />
+          </div>
+        )}
 
         {/* Filaments utilisés */}
         {job.filaments.length > 0 && (

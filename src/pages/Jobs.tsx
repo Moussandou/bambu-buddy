@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 import { orderBy } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
-import type { Job, Filament, JobFormData, JobState } from '../types';
+import type { Job, Filament, JobFormData, JobState, Template } from '../types';
 import { Button } from '../components/ui/Button';
 import { KanbanBoard } from '../components/jobs/KanbanBoard';
 import { JobForm } from '../components/jobs/JobForm';
 import { JobDetail } from '../components/jobs/JobDetail';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { TemplateCard } from '../components/templates/TemplateCard';
 import {
   createJob,
   updateJob,
@@ -18,12 +19,14 @@ import {
   deleteJob,
   markJobAsSold,
 } from '../services/jobs';
+import { incrementTemplateUsage } from '../services/templates';
 
 export function Jobs() {
   const { userData } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [viewingJob, setViewingJob] = useState<Job | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [soldModal, setSoldModal] = useState<{ job: Job | null; price: string }>({
     job: null,
     price: '',
@@ -41,15 +44,21 @@ export function Jobs() {
     userData?.uid
   );
 
+  const { data: templates } = useUserCollection<Template>(
+    COLLECTIONS.TEMPLATES,
+    userData?.uid,
+    [orderBy('timesUsed', 'desc')]
+  );
+
   // Handlers
-  async function handleCreateJob(data: JobFormData) {
+  async function handleCreateJob(data: JobFormData, newImages: File[], existingImages: string[]) {
     if (!userData) return;
-    await createJob(userData.uid, data, true); // auto-consume filament
+    await createJob(userData.uid, data, true, newImages, existingImages); // auto-consume filament
   }
 
-  async function handleUpdateJob(data: JobFormData) {
+  async function handleUpdateJob(data: JobFormData, newImages: File[], existingImages: string[]) {
     if (!editingJob) return;
-    await updateJob(editingJob.id, data);
+    await updateJob(editingJob.id, data, newImages, existingImages);
     setEditingJob(null);
   }
 
@@ -84,6 +93,29 @@ export function Jobs() {
     setSoldModal({ job: null, price: '' });
   }
 
+  async function handleUseTemplate(template: Template) {
+    if (!userData) return;
+
+    // Create job from template
+    const jobData: JobFormData = {
+      title: template.name,
+      description: template.description,
+      filaments: template.filaments,
+      salePrice: template.salePrice,
+      tags: template.tags,
+      printDuration_hours: template.printDuration_hours,
+      quantity: 1,
+    };
+
+    // Copy template images as existing images for the new job
+    await createJob(userData.uid, jobData, true, [], template.images);
+
+    // Increment template usage counter
+    await incrementTemplateUsage(template.id);
+
+    setShowTemplates(false);
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -97,9 +129,20 @@ export function Jobs() {
           </p>
         </div>
 
-        <Button icon={<Plus className="w-5 h-5" />} onClick={() => setShowForm(true)}>
-          Nouvelle impression
-        </Button>
+        <div className="flex gap-2">
+          {templates.length > 0 && (
+            <Button
+              variant="secondary"
+              icon={<FileText className="w-5 h-5" />}
+              onClick={() => setShowTemplates(true)}
+            >
+              Depuis template
+            </Button>
+          )}
+          <Button icon={<Plus className="w-5 h-5" />} onClick={() => setShowForm(true)}>
+            Nouvelle impression
+          </Button>
+        </div>
       </div>
 
       {/* Stats rapides */}
@@ -212,6 +255,43 @@ export function Jobs() {
             required
             autoFocus
           />
+        </div>
+      </Modal>
+
+      {/* Modal de sélection de template */}
+      <Modal
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        title="Créer depuis un template"
+        size="xl"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600 dark:text-gray-400">
+            Sélectionnez un template pour créer une impression rapidement
+          </p>
+
+          {templates.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">
+                Aucun template disponible
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+              {templates.map((template) => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  filaments={filaments}
+                  onUse={handleUseTemplate}
+                  onEdit={() => {}}
+                  onDelete={() => {}}
+                  currency={userData?.currency}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </Modal>
     </div>
