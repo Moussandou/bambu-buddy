@@ -133,7 +133,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Reset password (fonctionne aussi pour ajouter un mot de passe à un compte Google)
   async function resetPassword(email: string) {
-    await sendPasswordResetEmail(auth, email);
+    try {
+      console.log('[ResetPassword] Sending password reset email to:', email);
+      await sendPasswordResetEmail(auth, email);
+      console.log('[ResetPassword] Email sent successfully');
+    } catch (error) {
+      console.error('[ResetPassword] Error:', error);
+      throw error;
+    }
   }
 
   // Observer l'état d'auth

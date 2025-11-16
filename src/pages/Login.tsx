@@ -25,7 +25,7 @@ export function Login() {
     try {
       if (isForgotPassword) {
         await resetPassword(email);
-        setSuccess('Email de réinitialisation envoyé ! Vérifiez votre boîte mail.');
+        setSuccess('Email de réinitialisation envoyé ! Vérifiez votre boîte mail (et les spams).');
         setEmail('');
       } else if (isSignUp) {
         await signUp(email, password, displayName);
@@ -33,7 +33,18 @@ export function Login() {
         await signIn(email, password);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      if (err instanceof Error) {
+        // Messages d'erreur plus clairs pour le reset password
+        if (err.message.includes('auth/user-not-found')) {
+          setError('Aucun compte trouvé avec cet email.');
+        } else if (err.message.includes('auth/invalid-email')) {
+          setError('Format d\'email invalide.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Une erreur est survenue');
+      }
     } finally {
       setLoading(false);
     }
