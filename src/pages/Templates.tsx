@@ -3,6 +3,7 @@ import { Plus, FileText } from 'lucide-react';
 import { orderBy } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
 import type { Template, Filament, TemplateFormData } from '../types';
@@ -17,10 +18,13 @@ import {
 } from '../services/templates';
 import { uploadImages } from '../services/storage';
 import { createJob } from '../services/jobs';
+import { LoadingState } from '../components/ui/LoadingSpinner';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export function Templates() {
   const { userData } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
@@ -100,10 +104,11 @@ export function Templates() {
       await incrementTemplateUsage(template.id);
 
       // Redirect to Jobs page
+      toast.success('Impression créée depuis le template');
       navigate('/jobs');
     } catch (error) {
       console.error('Error creating job from template:', error);
-      alert('Erreur lors de la création de l\'impression depuis le template');
+      toast.error('Erreur lors de la création de l\'impression depuis le template');
     }
   }
 
@@ -127,20 +132,15 @@ export function Templates() {
 
       {/* Templates Grid */}
       {loading ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">Chargement...</p>
-        </div>
+        <LoadingState message="Chargement des templates..." />
       ) : templates.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Aucun template pour le moment
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
-            Les templates vous permettent de créer rapidement des impressions récurrentes
-          </p>
-          <Button onClick={() => setShowForm(true)}>Créer votre premier template</Button>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="Aucun template"
+          description="Les templates vous permettent de créer rapidement des impressions récurrentes"
+          actionLabel="Créer votre premier template"
+          onAction={() => setShowForm(true)}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (

@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { User, Camera } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ImageUpload } from '../ui/ImageUpload';
 
 export function ProfileSection() {
   const { currentUser } = useAuth();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
@@ -25,10 +27,10 @@ export function ProfileSection() {
         displayName: displayName || null,
         photoURL: existingPhotoURL || null,
       });
-      alert('Profil mis à jour avec succès');
+      toast.success('Profil mis à jour avec succès');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Erreur lors de la mise à jour du profil');
+      toast.error('Erreur lors de la mise à jour du profil');
     } finally {
       setLoading(false);
     }
