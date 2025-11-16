@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Plus, Download, TrendingUp, DollarSign, Wallet as WalletIcon } from 'lucide-react';
+import { Plus, Download, TrendingUp, DollarSign, Wallet as WalletIcon, Clock } from 'lucide-react';
 import { orderBy, addDoc, collection } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS, db } from '../lib/firebase';
 import type { Transaction, Sale, Job } from '../types';
@@ -15,6 +16,7 @@ import { exportToJSON } from '../utils/export';
 
 export function Wallet() {
   const { userData } = useAuth();
+  const toast = useToast();
   const [showExpenseForm, setShowExpenseForm] = useState(false);
 
   // Fetch transactions, sales, and jobs
@@ -67,12 +69,21 @@ export function Wallet() {
 
     const availableBalance = netProfit - withdrawn;
 
+    // Calculate potential revenue from jobs "en vente"
+    const jobsOnSale = jobs.filter((j) => j.state === 'en vente');
+    const potentialRevenue = jobsOnSale.reduce((sum, job) => {
+      const price = job.salePrice || 0;
+      const quantity = job.quantity || 1;
+      return sum + (price * quantity);
+    }, 0);
+
     return {
       totalRevenue,
       totalCosts: totalExpenses,
       netProfit,
       availableBalance,
       withdrawn,
+      potentialRevenue,
     };
   }, [transactions, sales, jobs, filaments]);
 
@@ -97,7 +108,7 @@ export function Wallet() {
     if (!userData) return;
 
     if (stats.availableBalance <= 0) {
-      alert('Aucun fonds disponible à retirer');
+      toast.warning('Aucun fonds disponible à retirer');
       return;
     }
 
@@ -110,12 +121,12 @@ export function Wallet() {
     const withdrawAmount = parseFloat(amount);
 
     if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
-      alert('Montant invalide');
+      toast.error('Montant invalide');
       return;
     }
 
     if (withdrawAmount > stats.availableBalance) {
-      alert('Montant supérieur au solde disponible');
+      toast.error('Montant supérieur au solde disponible');
       return;
     }
 
@@ -137,7 +148,7 @@ export function Wallet() {
     if (!userData) return;
 
     if (stats.availableBalance <= 0) {
-      alert('Aucun fonds disponible');
+      toast.warning('Aucun fonds disponible');
       return;
     }
 
@@ -194,7 +205,7 @@ export function Wallet() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">Total ventes</p>
@@ -256,6 +267,19 @@ export function Wallet() {
               Tout retirer
             </Button>
           </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-lg shadow-md p-6 border-2 border-amber-200 dark:border-amber-700">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">À venir</p>
+            <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <p className="text-3xl font-bold text-amber-900 dark:text-amber-100">
+            {formatCurrency(stats.potentialRevenue, userData?.currency)}
+          </p>
+          <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+            Revenus potentiels des objets en vente
+          </p>
         </div>
       </div>
 

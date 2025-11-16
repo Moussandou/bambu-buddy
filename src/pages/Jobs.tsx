@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, FileText } from 'lucide-react';
 import { orderBy } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
 import type { Job, Filament, JobFormData, JobState, Template } from '../types';
@@ -23,6 +24,7 @@ import { incrementTemplateUsage } from '../services/templates';
 
 export function Jobs() {
   const { userData } = useAuth();
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [viewingJob, setViewingJob] = useState<Job | null>(null);
@@ -85,7 +87,7 @@ export function Jobs() {
 
     const price = parseFloat(soldModal.price);
     if (isNaN(price) || price <= 0) {
-      alert('Prix invalide');
+      toast.error('Prix invalide');
       return;
     }
 
