@@ -63,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       displayName: firebaseUser.displayName || 'Utilisateur',
       currency: 'EUR',
       createdAt: Date.now(),
-      photoURL: firebaseUser.photoURL || undefined,
+      ...(firebaseUser.photoURL && { photoURL: firebaseUser.photoURL }),
     };
 
     await setDoc(userRef, newUser);
@@ -79,24 +79,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Sign up
   async function signUp(email: string, password: string, displayName: string) {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('[SignUp] User created in Auth:', result.user.uid);
 
-    // Mettre à jour le profil Firebase Auth
-    await updateProfile(result.user, { displayName });
+      // Mettre à jour le profil Firebase Auth
+      await updateProfile(result.user, { displayName });
+      console.log('[SignUp] Profile updated with displayName:', displayName);
 
-    // Créer le profil Firestore directement avec le displayName fourni
-    const userRef = doc(db, COLLECTIONS.USERS, result.user.uid);
-    const newUser: User = {
-      uid: result.user.uid,
-      email: result.user.email || '',
-      displayName: displayName,
-      currency: 'EUR',
-      createdAt: Date.now(),
-      photoURL: result.user.photoURL || undefined,
-    };
+      // Créer le profil Firestore directement avec le displayName fourni
+      const userRef = doc(db, COLLECTIONS.USERS, result.user.uid);
+      const newUser: User = {
+        uid: result.user.uid,
+        email: result.user.email || '',
+        displayName: displayName,
+        currency: 'EUR',
+        createdAt: Date.now(),
+        ...(result.user.photoURL && { photoURL: result.user.photoURL }),
+      };
 
-    await setDoc(userRef, newUser);
-    setUserData(newUser);
+      console.log('[SignUp] Creating Firestore profile:', newUser);
+      await setDoc(userRef, newUser);
+      console.log('[SignUp] Firestore profile created successfully');
+
+      setUserData(newUser);
+    } catch (error) {
+      console.error('[SignUp] Error during signup:', error);
+      throw error;
+    }
   }
 
   // Sign in avec Google
@@ -129,14 +139,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Observer l'état d'auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('[AuthStateChanged] User:', user?.uid, user?.email);
       setCurrentUser(user);
 
       if (user) {
         try {
+          console.log('[AuthStateChanged] Fetching user data for:', user.uid);
           const userData = await getUserData(user);
+          console.log('[AuthStateChanged] User data fetched:', userData);
           setUserData(userData);
         } catch (error) {
-          // Error fetching user data
+          console.error('[AuthStateChanged] Error fetching user data:', error);
           setUserData(null);
         }
       } else {
