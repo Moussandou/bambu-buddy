@@ -7,7 +7,8 @@ import type { Sale, Job } from '../types';
 import { Button } from '../components/ui/Button';
 import { SalesTable } from '../components/sales/SalesTable';
 import { SalesChart } from '../components/sales/SalesChart';
-import { DateFilter, filterSalesByPeriod, type DateFilterPeriod } from '../components/sales/DateFilter';
+import { DateFilter, type DateFilterPeriod } from '../components/sales/DateFilter';
+import { filterSalesByPeriod } from '../utils/salesFilters';
 import { JobDetail } from '../components/jobs/JobDetail';
 import { exportSalesToCSV } from '../utils/export';
 import { formatCurrency } from '../utils/calculations';
@@ -46,7 +47,7 @@ export function Sales() {
 
   // Calculate totals
   const stats = useMemo(() => {
-    const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.price, 0);
+    const totalRevenue = filteredSales.reduce((sum: number, sale: Sale) => sum + sale.price, 0);
     const count = filteredSales.length;
     const averagePrice = count > 0 ? totalRevenue / count : 0;
 

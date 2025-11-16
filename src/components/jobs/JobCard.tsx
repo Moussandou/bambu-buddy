@@ -83,7 +83,7 @@ export const JobCard = memo(function JobCard({
     const interval = setInterval(updateProgress, 60000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [job.state, job.id, job.title, job.startedAt, job.printDuration_hours]);
+  }, [job.state, job.id, job.title, job.printStartedAt, job.printDuration_hours]);
 
   return (
     <Card
