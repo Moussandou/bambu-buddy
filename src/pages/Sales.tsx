@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Download, TrendingUp } from 'lucide-react';
-import { orderBy } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
@@ -18,17 +17,21 @@ export function Sales() {
   const [period, setPeriod] = useState<DateFilterPeriod>('thisMonth');
   const [viewingJob, setViewingJob] = useState<Job | null>(null);
 
-  // Fetch sales and jobs
-  const { data: allSales, loading: salesLoading } = useUserCollection<Sale>(
+  // Fetch sales and jobs (sans orderBy pour éviter les index)
+  const { data: allSalesRaw, loading: salesLoading } = useUserCollection<Sale>(
     COLLECTIONS.SALES,
-    userData?.uid,
-    [orderBy('date', 'desc')]
+    userData?.uid
   );
 
   const { data: jobs, loading: jobsLoading } = useUserCollection<Job>(
     COLLECTIONS.JOBS,
     userData?.uid
   );
+
+  // Tri côté client par date
+  const allSales = useMemo(() => {
+    return [...allSalesRaw].sort((a, b) => b.date - a.date);
+  }, [allSalesRaw]);
 
   const { data: filaments } = useUserCollection<import('../types').Filament>(
     COLLECTIONS.FILAMENTS,

@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, FileText } from 'lucide-react';
-import { orderBy } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -28,17 +27,21 @@ export function Templates() {
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
-  // Récupère les données en temps réel
-  const { data: templates, loading } = useUserCollection<Template>(
+  // Récupère les données en temps réel (sans orderBy pour éviter les index)
+  const { data: templatesRaw, loading } = useUserCollection<Template>(
     COLLECTIONS.TEMPLATES,
-    userData?.uid,
-    [orderBy('timesUsed', 'desc')]
+    userData?.uid
   );
 
   const { data: filaments } = useUserCollection<Filament>(
     COLLECTIONS.FILAMENTS,
     userData?.uid
   );
+
+  // Tri côté client
+  const templates = useMemo(() => {
+    return [...templatesRaw].sort((a, b) => (b.timesUsed || 0) - (a.timesUsed || 0));
+  }, [templatesRaw]);
 
   // Handlers
   async function handleCreateTemplate(

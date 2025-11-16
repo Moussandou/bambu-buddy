@@ -8,9 +8,10 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from '../lib/firebase';
@@ -24,6 +25,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,12 +85,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUserData(userData);
   }
 
-  // Sign in avec Google
+  // Sign in avec Google - fonctionne uniquement en web
   async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const userData = await getUserData(result.user);
-    setUserData(userData);
+
+    // Détecter si on est dans Tauri
+    const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+    if (isTauri) {
+      throw new Error('La connexion Google n\'est pas disponible dans l\'application desktop. Veuillez utiliser la connexion par email/mot de passe.');
+    }
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const userData = await getUserData(result.user);
+      setUserData(userData);
+    } catch (error: any) {
+      console.error('Erreur Google sign-in:', error);
+      if (error?.code === 'auth/popup-blocked') {
+        throw new Error('Popup bloquée par le navigateur. Autorisez les popups pour ce site.');
+      }
+      throw error;
+    }
   }
 
   // Sign out
@@ -97,9 +115,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUserData(null);
   }
 
+  // Reset password (fonctionne aussi pour ajouter un mot de passe à un compte Google)
+  async function resetPassword(email: string) {
+    await sendPasswordResetEmail(auth, email);
+  }
+
   // Observer l'état d'auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('Auth state changed:', user?.email);
       setCurrentUser(user);
 
       if (user) {
@@ -127,6 +151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signUp,
     signInWithGoogle,
     signOut,
+    resetPassword,
   };
 
   return (

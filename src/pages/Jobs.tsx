@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, FileText } from 'lucide-react';
-import { orderBy } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useUserCollection } from '../hooks/useFirestore';
@@ -34,11 +33,10 @@ export function Jobs() {
     price: '',
   });
 
-  // Récupère les données en temps réel
-  const { data: jobs, loading } = useUserCollection<Job>(
+  // Récupère les données en temps réel (sans orderBy pour éviter les index)
+  const { data: jobsRaw, loading } = useUserCollection<Job>(
     COLLECTIONS.JOBS,
-    userData?.uid,
-    [orderBy('createdAt', 'desc')]
+    userData?.uid
   );
 
   const { data: filaments } = useUserCollection<Filament>(
@@ -46,11 +44,19 @@ export function Jobs() {
     userData?.uid
   );
 
-  const { data: templates } = useUserCollection<Template>(
+  const { data: templatesRaw } = useUserCollection<Template>(
     COLLECTIONS.TEMPLATES,
-    userData?.uid,
-    [orderBy('timesUsed', 'desc')]
+    userData?.uid
   );
+
+  // Tri côté client
+  const jobs = useMemo(() => {
+    return [...jobsRaw].sort((a, b) => b.createdAt - a.createdAt);
+  }, [jobsRaw]);
+
+  const templates = useMemo(() => {
+    return [...templatesRaw].sort((a, b) => (b.timesUsed || 0) - (a.timesUsed || 0));
+  }, [templatesRaw]);
 
   // Handlers
   async function handleCreateJob(data: JobFormData, newImages: File[], existingImages: string[]) {

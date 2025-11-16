@@ -64,7 +64,25 @@ VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 
 **Storage Rules** : Va dans Firebase Console > Storage > Rules et colle le contenu de `storage.rules`
 
-### 5. Lancer l'app en développement
+### 5. Créer les index Firestore (IMPORTANT ⚠️)
+
+Les requêtes nécessitent des index composites. **Deux options** :
+
+**Option A - Automatique (Recommandé)** :
+```bash
+npm install -g firebase-tools
+firebase login
+firebase init firestore  # Sélectionner votre projet
+firebase deploy --only firestore:indexes
+```
+
+**Option B - Manuel** :
+- Lance l'app et clique sur les liens d'erreur dans la console
+- OU voir le guide complet dans `FIREBASE_INDEXES_SETUP.md`
+
+⏱️ Les index prennent 2-5 minutes à se créer.
+
+### 6. Lancer l'app en développement
 
 ```bash
 npm run dev
@@ -143,6 +161,8 @@ npm run dev          # Dev server
 npm run build        # Build production
 npm run preview      # Preview build
 npm run lint         # ESLint
+npm run tauri:dev    # Lance la fenêtre Tauri en mode dev
+npm run tauri:build  # Build macOS (.app + .dmg)
 ```
 
 ## Déploiement
@@ -161,17 +181,30 @@ firebase deploy
 - **Vercel** : `vercel`
 - **Netlify** : `netlify deploy`
 
-## Packaging Desktop (Tauri - optionnel)
+## Packaging Desktop (Tauri)
 
-Pour créer une app Mac native :
+### Prérequis (macOS)
+- Xcode + Command Line Tools (`xcode-select --install`)
+- Rust toolchain (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
+- Licence Xcode acceptée (`sudo xcodebuild -license`)
 
+### Lancer en mode desktop
 ```bash
-npm install -D @tauri-apps/cli
-npm install @tauri-apps/api
-npm run tauri init
-npm run tauri dev
-npm run tauri build  # Crée l'app .app
+npm install            # installe aussi le CLI Tauri
+npm run tauri:dev      # ouvre la fenêtre native
 ```
+
+### Builder l'app .app / .dmg
+```bash
+npm run build          # build Vite (dist/)
+npm run tauri:build    # génère src-tauri/target/release/bundle/macos/
+```
+
+Les icônes se configurent via `src-tauri/tauri.conf.json`. Tu peux générer les formats requis avec :
+```bash
+npx tauri icon public/icon.png
+```
+*(fournis d'abord une icône carrée 1024x1024).* 
 
 ## Support
 

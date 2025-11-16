@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Plus, Search } from 'lucide-react';
-import { orderBy } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
@@ -29,11 +28,10 @@ export function Filaments() {
     mode: 'consume' | 'add';
   }>({ filament: null, mode: 'consume' });
 
-  // Récupère les filaments en temps réel
+  // Récupère les filaments en temps réel (sans orderBy pour éviter les index)
   const { data: filaments, loading } = useUserCollection<Filament>(
     COLLECTIONS.FILAMENTS,
-    userData?.uid,
-    [orderBy('createdAt', 'desc')]
+    userData?.uid
   );
 
   // Filtres et tri
