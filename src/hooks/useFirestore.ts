@@ -22,6 +22,12 @@ export function useFirestoreCollection<T>(
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!collectionName) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     const q = query(collection(db, collectionName), ...constraints);
 
     const unsubscribe = onSnapshot(
@@ -43,7 +49,7 @@ export function useFirestoreCollection<T>(
     );
 
     return unsubscribe;
-  }, [collectionName, JSON.stringify(constraints)]);
+  }, [collectionName, constraints.length]);
 
   return { data, loading, error };
 }
