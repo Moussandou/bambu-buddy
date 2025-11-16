@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type {
   QueryConstraint,
 } from 'firebase/firestore';
@@ -62,9 +62,12 @@ export function useUserCollection<T>(
   userId: string | undefined,
   additionalConstraints: QueryConstraint[] = []
 ) {
-  const constraints = userId
-    ? [where('userId', '==', userId), ...additionalConstraints]
-    : [];
+  // Memoize constraints to prevent recreating them on every render
+  const constraints = useMemo(() => {
+    return userId
+      ? [where('userId', '==', userId), ...additionalConstraints]
+      : [];
+  }, [userId, additionalConstraints.length]);
 
   return useFirestoreCollection<T>(collectionName, constraints);
 }
