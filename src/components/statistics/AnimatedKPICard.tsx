@@ -35,39 +35,37 @@ export function AnimatedKPICard({
     },
   };
 
-  // Animated values based on type
-  const currencyCount = useCurrencyCountUp(type === 'currency' ? value : 0, currency, 4000);
-  const numberCount = useCountUp(type === 'number' ? value : 0, 4000);
-  const percentageCount = useCountUp(type === 'percentage' ? value : 0, 4000);
-  const hoursCount = useCountUp(type === 'hours' ? value : 0, 4000);
+  // Convertir le delay en millisecondes (delay est en secondes)
+  const delayMs = delay * 1000;
 
-  const getDisplayValue = () => {
-    switch (type) {
-      case 'currency':
-        return currencyCount.value;
-      case 'percentage':
-        return `${percentageCount.count}%`;
-      case 'hours':
-        return `${hoursCount.count}h`;
-      case 'number':
-      default:
-        return numberCount.count.toString();
-    }
-  };
+  // Appeler tous les hooks inconditionnellement (règles de React)
+  // mais n'utiliser que celui correspondant au type
+  const { count: numberCount, ref: numberRef } = useCountUp(value, 4000, 0, delayMs);
+  const { value: currencyValue, ref: currencyRef } = useCurrencyCountUp(value, currency, 4000, delayMs);
 
-  const getRef = () => {
-    switch (type) {
-      case 'currency':
-        return currencyCount.ref;
-      case 'percentage':
-        return percentageCount.ref;
-      case 'hours':
-        return hoursCount.ref;
-      case 'number':
-      default:
-        return numberCount.ref;
-    }
-  };
+  // Sélectionner la valeur et ref appropriés selon le type
+  let displayValue: string;
+  let displayRef: React.RefObject<HTMLDivElement | null>;
+
+  switch (type) {
+    case 'currency':
+      displayValue = currencyValue;
+      displayRef = currencyRef;
+      break;
+    case 'percentage':
+      displayValue = `${numberCount}%`;
+      displayRef = numberRef;
+      break;
+    case 'hours':
+      displayValue = `${numberCount}h`;
+      displayRef = numberRef;
+      break;
+    case 'number':
+    default:
+      displayValue = numberCount.toString();
+      displayRef = numberRef;
+      break;
+  }
 
   return (
     <motion.div
@@ -86,9 +84,9 @@ export function AnimatedKPICard({
         )}
       </div>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{label}</p>
-      <div ref={getRef()}>
+      <div ref={displayRef}>
         <p className="text-2xl font-bold text-gray-900 dark:text-white">
-          {getDisplayValue()}
+          {displayValue}
         </p>
       </div>
     </motion.div>
