@@ -128,6 +128,7 @@ export function KanbanBoard({
                       onView={onJobView}
                       onEdit={onJobEdit}
                       onDelete={onJobDelete}
+                      onStateChange={onJobStateChange}
                       currency={currency}
                       isDragging={activeId === job.id}
                     />

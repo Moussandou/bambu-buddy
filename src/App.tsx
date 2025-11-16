@@ -104,13 +104,12 @@ function App() {
   // Initialize dark mode on app load
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode) {
-      const isDark = JSON.parse(savedDarkMode);
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+    const isDark = savedDarkMode ? JSON.parse(savedDarkMode) : false;
+
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 

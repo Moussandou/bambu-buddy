@@ -1,5 +1,5 @@
-import { Eye, Edit2, Trash2, Package } from 'lucide-react';
-import type { Job, Filament } from '../../types';
+import { Eye, Edit2, Trash2, Package, Tag, DollarSign } from 'lucide-react';
+import type { Job, Filament, JobState } from '../../types';
 import { Card } from '../ui/Card';
 import { JobStateBadge, FilamentBadge } from '../ui/Badge';
 import { formatCurrency, formatDuration } from '../../utils/calculations';
@@ -15,6 +15,7 @@ interface JobCardProps {
   onView: (job: Job) => void;
   onEdit: (job: Job) => void;
   onDelete: (id: string) => void;
+  onStateChange?: (jobId: string, newState: JobState) => void;
   currency?: string;
   isDragging?: boolean;
 }
@@ -25,6 +26,7 @@ export function JobCard({
   onView,
   onEdit,
   onDelete,
+  onStateChange,
   currency = 'EUR',
   isDragging = false,
 }: JobCardProps) {
@@ -82,15 +84,27 @@ export function JobCard({
     >
       <div className="space-y-3">
         {/* Image si disponible */}
-        {mainImage && (
-          <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+        {mainImage ? (
+          <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden relative">
             <img
               src={mainImage}
               alt={job.title}
               className="w-full h-full object-cover"
             />
+            {/* Quantity badge */}
+            {job.quantity && job.quantity > 1 && (
+              <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold">
+                ×{job.quantity}
+              </div>
+            )}
           </div>
-        )}
+        ) : job.quantity && job.quantity > 1 ? (
+          <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center">
+            <span className="text-4xl font-bold text-gray-400 dark:text-gray-600">
+              ×{job.quantity}
+            </span>
+          </div>
+        ) : null}
 
         {/* Header */}
         <div>
@@ -184,6 +198,30 @@ export function JobCard({
         {job.printDuration_hours && (
           <div className="text-xs text-gray-500 dark:text-gray-400">
             Durée: {formatDuration(job.printDuration_hours)}
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        {onStateChange && (
+          <div className="flex gap-2 pb-2">
+            {job.state === 'fini' && (
+              <button
+                onClick={() => onStateChange(job.id, 'en vente')}
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm font-medium transition-colors"
+              >
+                <Tag className="w-4 h-4" />
+                Mettre en vente
+              </button>
+            )}
+            {job.state === 'en vente' && (
+              <button
+                onClick={() => onStateChange(job.id, 'vendu')}
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm font-medium transition-colors"
+              >
+                <DollarSign className="w-4 h-4" />
+                Marquer vendu
+              </button>
+            )}
           </div>
         )}
 

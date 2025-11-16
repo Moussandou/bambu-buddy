@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import { Card } from './Card';
+import { CountUp } from './CountUp';
 
 interface KPICardProps {
   title: string;
@@ -12,6 +13,7 @@ interface KPICardProps {
     isPositive: boolean;
   };
   onClick?: () => void;
+  animate?: boolean;
 }
 
 export function KPICard({
@@ -22,7 +24,12 @@ export function KPICard({
   iconColor = '#3b82f6',
   trend,
   onClick,
+  animate = true,
 }: KPICardProps) {
+  // Si c'est un nombre et qu'on veut animer
+  const isNumber = typeof value === 'number';
+  const shouldAnimate = animate && isNumber;
+
   return (
     <Card hover={!!onClick} onClick={onClick}>
       <div className="flex items-start justify-between">
@@ -31,7 +38,11 @@ export function KPICard({
             {title}
           </p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            {value}
+            {shouldAnimate ? (
+              <CountUp end={value as number} duration={1500} />
+            ) : (
+              value
+            )}
           </p>
           {subtitle && (
             <p className="text-sm text-gray-500 dark:text-gray-400">

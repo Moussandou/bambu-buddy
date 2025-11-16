@@ -86,6 +86,16 @@ export function Templates() {
   async function handleUseTemplate(template: Template) {
     if (!userData) return;
 
+    // Ask for quantity
+    const quantityStr = prompt('Combien d\'exemplaires voulez-vous imprimer ?', '1');
+    if (!quantityStr) return; // User cancelled
+
+    const quantity = parseInt(quantityStr);
+    if (isNaN(quantity) || quantity < 1) {
+      toast.error('Quantité invalide');
+      return;
+    }
+
     try {
       // Create job from template
       const jobData = {
@@ -95,7 +105,7 @@ export function Templates() {
         salePrice: template.salePrice,
         tags: template.tags,
         printDuration_hours: template.printDuration_hours,
-        quantity: 1,
+        quantity,
       };
 
       await createJob(userData.uid, jobData, false, [], template.images || []);
@@ -104,7 +114,7 @@ export function Templates() {
       await incrementTemplateUsage(template.id);
 
       // Redirect to Jobs page
-      toast.success('Impression créée depuis le template');
+      toast.success(`${quantity} impression(s) créée(s) depuis le template`);
       navigate('/jobs');
     } catch (error) {
       console.error('Error creating job from template:', error);
