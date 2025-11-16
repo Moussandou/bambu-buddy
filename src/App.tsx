@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { Layout } from './components/layout/Layout';
+import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Filaments } from './pages/Filaments';
@@ -17,17 +18,44 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return currentUser ? <>{children}</> : <Navigate to="/login" />;
 }
 
+function LandingWrapper() {
+  const navigate = useNavigate();
+  const [hasSeenLanding, setHasSeenLanding] = useState(() => {
+    return localStorage.getItem('hasSeenLanding') === 'true';
+  });
+
+  const handleGetStarted = () => {
+    localStorage.setItem('hasSeenLanding', 'true');
+    setHasSeenLanding(true);
+    navigate('/login');
+  };
+
+  if (!hasSeenLanding) {
+    return <Landing onGetStarted={handleGetStarted} />;
+  }
+
+  return <Navigate to="/login" />;
+}
+
 function AppRoutes() {
   const { currentUser } = useAuth();
 
   return (
     <Routes>
       <Route
+        path="/welcome"
+        element={<LandingWrapper />}
+      />
+      <Route
         path="/login"
-        element={currentUser ? <Navigate to="/" /> : <Login />}
+        element={currentUser ? <Navigate to="/dashboard" /> : <Login />}
       />
       <Route
         path="/"
+        element={<Navigate to={currentUser ? "/dashboard" : "/welcome"} />}
+      />
+      <Route
+        path="/dashboard"
         element={
           <PrivateRoute>
             <Layout>

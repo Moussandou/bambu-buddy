@@ -8,6 +8,7 @@ import { calculateJobTotalCost } from '../../utils/calculations';
 import { calculatePrintProgress } from '../../lib/utils';
 import { ProgressBar } from '../ui/ProgressBar';
 import { updateJobState } from '../../services/jobs';
+import { notifyPrintComplete } from '../../services/notifications';
 
 interface JobCardProps {
   job: Job;
@@ -57,6 +58,8 @@ export const JobCard = memo(function JobCard({
           hasAutoCompleted.current = true;
           try {
             await updateJobState(job.id, 'fini');
+            // Send notification
+            await notifyPrintComplete(job.title, job.id);
           } catch (error) {
             console.error('Error auto-completing job:', error);
             hasAutoCompleted.current = false;

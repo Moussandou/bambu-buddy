@@ -2,6 +2,7 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import { ProfileSection } from '../components/settings/ProfileSection';
 import { CurrencySelector } from '../components/settings/CurrencySelector';
 import { ThemeToggle } from '../components/settings/ThemeToggle';
+import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { DataManagement } from '../components/settings/DataManagement';
 
 export function Settings() {
@@ -24,6 +25,7 @@ export function Settings() {
         <div className="space-y-6">
           <ProfileSection />
           <ThemeToggle />
+          <NotificationSettings />
         </div>
 
         {/* Right Column */}

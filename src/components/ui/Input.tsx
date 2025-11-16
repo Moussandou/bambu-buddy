@@ -28,7 +28,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               ? 'border-red-500 focus:ring-red-500'
               : 'border-gray-300 dark:border-gray-600'
             }
-            dark:bg-gray-700 dark:text-white
+            bg-white dark:bg-gray-700
+            text-gray-900 dark:text-white
+            placeholder:text-gray-400 dark:placeholder:text-gray-500
             ${className}
           `}
           {...props}
@@ -75,7 +77,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
               ? 'border-red-500 focus:ring-red-500'
               : 'border-gray-300 dark:border-gray-600'
             }
-            dark:bg-gray-700 dark:text-white
+            bg-white dark:bg-gray-700
+            text-gray-900 dark:text-white
+            placeholder:text-gray-400 dark:placeholder:text-gray-500
             resize-none
             ${className}
           `}
