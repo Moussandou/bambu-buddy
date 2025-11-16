@@ -14,8 +14,8 @@ import {
 } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
-// Validation des variables d'environnement
-const requiredEnvVars = {
+// Validation et configuration Firebase
+const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -25,17 +25,15 @@ const requiredEnvVars = {
 };
 
 // Vérifier que toutes les variables sont définies
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([, value]) => !value)
+const missingVars = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value || value === '')
   .map(([key]) => `VITE_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`);
 
-if (missingVars.length > 0) {
+if (missingVars.length > 0 && import.meta.env.MODE === 'production') {
   throw new Error(
     `Missing Firebase configuration. Please set the following environment variables:\n${missingVars.join('\n')}\n\nCopy .env.example to .env.local and fill in your Firebase credentials.`
   );
 }
-
-const firebaseConfig = requiredEnvVars;
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
