@@ -11,13 +11,11 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithCredential,
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from '../lib/firebase';
 import type { User } from '../types';
-import { startOAuthFlow, isTauriEnvironment } from '../services/oauth';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -82,37 +80,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign up
   async function signUp(email: string, password: string, displayName: string) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
+
+    // Mettre à jour le profil Firebase Auth
     await updateProfile(result.user, { displayName });
-    const userData = await getUserData(result.user);
-    setUserData(userData);
+
+    // Créer le profil Firestore directement avec le displayName fourni
+    const userRef = doc(db, COLLECTIONS.USERS, result.user.uid);
+    const newUser: User = {
+      uid: result.user.uid,
+      email: result.user.email || '',
+      displayName: displayName,
+      currency: 'EUR',
+      createdAt: Date.now(),
+      photoURL: result.user.photoURL || undefined,
+    };
+
+    await setDoc(userRef, newUser);
+    setUserData(newUser);
   }
 
-  // Sign in avec Google - adapté pour web et Tauri
+  // Sign in avec Google
   async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
-    const isTauri = isTauriEnvironment();
 
     try {
-      if (isTauri) {
-        // Dans Tauri, ouvrir le navigateur système pour l'OAuth
-        console.log('Starting OAuth flow in system browser...');
-        const idToken = await startOAuthFlow();
-
-        // Créer les credentials avec le token ID reçu
-        const credential = GoogleAuthProvider.credential(idToken);
-        const result = await signInWithCredential(auth, credential);
-
-        const userData = await getUserData(result.user);
-        setUserData(userData);
-      } else {
-        // En web, utiliser popup (fonctionne parfaitement)
-        const result = await signInWithPopup(auth, provider);
-        const userData = await getUserData(result.user);
-        setUserData(userData);
-      }
-    } catch (error: any) {
-      console.error('Erreur Google sign-in:', error);
-      if (error?.code === 'auth/popup-blocked') {
+      const result = await signInWithPopup(auth, provider);
+      const userData = await getUserData(result.user);
+      setUserData(userData);
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'auth/popup-blocked') {
         throw new Error('Popup bloquée par le navigateur. Autorisez les popups pour ce site.');
       }
       throw error;
@@ -133,7 +129,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Observer l'état d'auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log('Auth state changed:', user?.email);
       setCurrentUser(user);
 
       if (user) {
@@ -141,7 +136,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const userData = await getUserData(user);
           setUserData(userData);
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          // Error fetching user data
+          setUserData(null);
         }
       } else {
         setUserData(null);

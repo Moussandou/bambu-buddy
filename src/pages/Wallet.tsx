@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS, db } from '../lib/firebase';
-import type { Transaction, Sale, Job } from '../types';
+import type { Transaction, Sale, Job, Filament } from '../types';
 import { Button } from '../components/ui/Button';
 import { WalletChart } from '../components/wallet/WalletChart';
 import { TransactionList } from '../components/wallet/TransactionList';
@@ -36,7 +36,7 @@ export function Wallet() {
     userData?.uid
   );
 
-  const { data: filaments } = useUserCollection(
+  const { data: filaments } = useUserCollection<Filament>(
     COLLECTIONS.FILAMENTS,
     userData?.uid
   );
@@ -47,7 +47,7 @@ export function Wallet() {
     const totalRevenue = sales.reduce((sum, sale) => sum + sale.price, 0);
 
     // Total costs from jobs (filament costs)
-    const filamentsMap = new Map(filaments.map((f: any) => [f.id, f]));
+    const filamentsMap = new Map(filaments.map((f) => [f.id, f] as const));
     const totalCosts = jobs.reduce((sum, job) => {
       const jobCost = calculateJobTotalCost(job.filaments, filamentsMap);
       const quantity = job.quantity || 1;

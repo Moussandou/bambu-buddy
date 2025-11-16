@@ -42,8 +42,7 @@ export async function deleteImage(url: string): Promise<void> {
   try {
     const imageRef = ref(storage, url);
     await deleteObject(imageRef);
-  } catch (error) {
-    console.error('Error deleting image:', error);
+  } catch {
     // Ignore si l'image n'existe pas
   }
 }

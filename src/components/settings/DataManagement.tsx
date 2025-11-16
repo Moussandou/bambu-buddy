@@ -14,7 +14,11 @@ export function DataManagement() {
 
     setLoading(true);
     try {
-      const exportData: any = {
+      const exportData: {
+        exportDate: string;
+        user: { email: string; displayName: string; currency: string };
+        data: Record<string, unknown[]>;
+      } = {
         exportDate: new Date().toISOString(),
         user: {
           email: userData.email,

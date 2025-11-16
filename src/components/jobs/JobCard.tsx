@@ -3,7 +3,7 @@ import type { Job, Filament, JobState } from '../../types';
 import { Card } from '../ui/Card';
 import { JobStateBadge, FilamentBadge } from '../ui/Badge';
 import { formatCurrency, formatDuration } from '../../utils/calculations';
-import { useMemo, useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useState, useRef, memo } from 'react';
 import { calculateJobTotalCost } from '../../utils/calculations';
 import { calculatePrintProgress } from '../../lib/utils';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -11,7 +11,7 @@ import { updateJobState } from '../../services/jobs';
 
 interface JobCardProps {
   job: Job;
-  filaments: Filament[];
+  filamentsMap: Map<string, Filament>;
   onView: (job: Job) => void;
   onEdit: (job: Job) => void;
   onDelete: (id: string) => void;
@@ -20,9 +20,9 @@ interface JobCardProps {
   isDragging?: boolean;
 }
 
-export function JobCard({
+export const JobCard = memo(function JobCard({
   job,
-  filaments,
+  filamentsMap,
   onView,
   onEdit,
   onDelete,
@@ -31,7 +31,6 @@ export function JobCard({
   isDragging = false,
 }: JobCardProps) {
   // Calcul du coût total
-  const filamentsMap = useMemo(() => new Map(filaments.map((f) => [f.id, f])), [filaments]);
   const totalCost = useMemo(() => {
     const baseCost = calculateJobTotalCost(job.filaments, filamentsMap);
     const quantity = job.quantity || 1;
@@ -252,4 +251,4 @@ export function JobCard({
       </div>
     </Card>
   );
-}
+});

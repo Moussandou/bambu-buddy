@@ -84,14 +84,11 @@ export async function updateTemplate(
 ): Promise<void> {
   const docRef = doc(db, COLLECTIONS.TEMPLATES, id);
 
-  const updateData: any = {
+  const updateData: Partial<Template> = {
     ...data,
     updatedAt: Date.now(),
+    ...(imageUrls !== undefined && { images: imageUrls }),
   };
-
-  if (imageUrls !== undefined) {
-    updateData.images = imageUrls;
-  }
 
   await updateDoc(docRef, updateData);
 }

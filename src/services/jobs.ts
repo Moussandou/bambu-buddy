@@ -158,7 +158,7 @@ export async function updateJob(
     await deleteImages(imagesToDelete);
   }
 
-  const updateData: any = {
+  const updateData: Partial<Job> = {
     ...data,
     images: finalImageUrls,
     updatedAt: Date.now(),
@@ -176,15 +176,11 @@ export async function updateJobState(
 ): Promise<void> {
   const docRef = doc(db, COLLECTIONS.JOBS, id);
 
-  const updates: any = {
+  const updates: Partial<Job> = {
     state,
     updatedAt: Date.now(),
+    ...(state === 'vendu' && { soldAt: Date.now() }),
   };
-
-  // Si vendu, ajoute timestamp
-  if (state === 'vendu') {
-    updates.soldAt = Date.now();
-  }
 
   await updateDoc(docRef, updates);
 }

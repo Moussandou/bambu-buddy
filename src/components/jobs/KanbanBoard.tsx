@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type {
   DragStartEvent,
   DragOverEvent,
@@ -51,6 +51,12 @@ export function KanbanBoard({
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
+  );
+
+  // Créer la map de filaments une seule fois pour toutes les cartes
+  const filamentsMap = useMemo(
+    () => new Map(filaments.map((f) => [f.id, f])),
+    [filaments]
   );
 
   // Organise les jobs par colonne
@@ -124,7 +130,7 @@ export function KanbanBoard({
                   <div key={job.id} id={job.id}>
                     <JobCard
                       job={job}
-                      filaments={filaments}
+                      filamentsMap={filamentsMap}
                       onView={onJobView}
                       onEdit={onJobEdit}
                       onDelete={onJobDelete}
@@ -144,7 +150,7 @@ export function KanbanBoard({
         {activeJob && (
           <JobCard
             job={activeJob}
-            filaments={filaments}
+            filamentsMap={filamentsMap}
             onView={onJobView}
             onEdit={onJobEdit}
             onDelete={onJobDelete}

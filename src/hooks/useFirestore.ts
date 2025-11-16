@@ -30,12 +30,9 @@ export function useFirestoreCollection<T>(
     setLoading(true);
     const q = query(collection(db, collectionName), ...constraints);
 
-    console.log('[useFirestore] Setting up listener for:', collectionName);
-
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        console.log('[useFirestore] Snapshot received for:', collectionName, 'count:', snapshot.docs.length);
         const items = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -45,17 +42,15 @@ export function useFirestoreCollection<T>(
         setError(null);
       },
       (err) => {
-        console.error(`Error fetching ${collectionName}:`, err);
         setError(err as Error);
         setLoading(false);
       }
     );
 
     return () => {
-      console.log('[useFirestore] Cleaning up listener for:', collectionName);
       unsubscribe();
     };
-  }, [collectionName]);
+  }, [collectionName, constraints]);
 
   return { data, loading, error };
 }
@@ -82,12 +77,9 @@ export function useUserCollection<T>(
     const constraints = [where('userId', '==', userId), ...additionalConstraints];
     const q = query(collection(db, collectionName), ...constraints);
 
-    console.log('[useUserCollection] Setting up listener for:', collectionName, 'userId:', userId);
-
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        console.log('[useUserCollection] Snapshot received for:', collectionName, 'count:', snapshot.docs.length);
         const items = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -97,17 +89,15 @@ export function useUserCollection<T>(
         setError(null);
       },
       (err) => {
-        console.error(`Error fetching ${collectionName}:`, err);
         setError(err as Error);
         setLoading(false);
       }
     );
 
     return () => {
-      console.log('[useUserCollection] Cleaning up listener for:', collectionName);
       unsubscribe();
     };
-  }, [collectionName, userId]);
+  }, [collectionName, userId, additionalConstraints]);
 
   return { data, loading, error };
 }

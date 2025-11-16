@@ -32,8 +32,8 @@ export function Login() {
       } else {
         await signIn(email, password);
       }
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
@@ -45,8 +45,8 @@ export function Login() {
     setLoading(true);
     try {
       await signInWithGoogle();
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
@@ -153,14 +153,19 @@ export function Login() {
                 </div>
               </div>
 
-              <Button
-                onClick={handleGoogleSignIn}
-                variant="secondary"
-                className="w-full mt-4"
-                isLoading={loading}
-              >
-                Continuer avec Google
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  onClick={handleGoogleSignIn}
+                  variant="secondary"
+                  className="w-full mt-4"
+                  isLoading={loading}
+                >
+                  Continuer avec Google
+                </Button>
+                <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                  ⚠️ Connexion Google disponible uniquement sur la version web
+                </p>
+              </div>
             </div>
           )}
 
