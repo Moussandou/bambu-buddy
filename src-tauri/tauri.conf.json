@@ -30,5 +30,13 @@
     "icon": [
       "icons/icon.png"
     ]
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [],
+      "desktop": {
+        "schemes": ["bambubuddy"]
+      }
+    }
   }
 }

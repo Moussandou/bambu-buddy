@@ -11,11 +11,13 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, COLLECTIONS } from '../lib/firebase';
 import type { User } from '../types';
+import { startOAuthFlow, isTauriEnvironment } from '../services/oauth';
 
 interface AuthContextType {
   currentUser: FirebaseUser | null;
@@ -85,21 +87,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUserData(userData);
   }
 
-  // Sign in avec Google - fonctionne uniquement en web
+  // Sign in avec Google - adapté pour web et Tauri
   async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
-
-    // Détecter si on est dans Tauri
-    const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-
-    if (isTauri) {
-      throw new Error('La connexion Google n\'est pas disponible dans l\'application desktop. Veuillez utiliser la connexion par email/mot de passe.');
-    }
+    const isTauri = isTauriEnvironment();
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      const userData = await getUserData(result.user);
-      setUserData(userData);
+      if (isTauri) {
+        // Dans Tauri, ouvrir le navigateur système pour l'OAuth
+        console.log('Starting OAuth flow in system browser...');
+        const idToken = await startOAuthFlow();
+
+        // Créer les credentials avec le token ID reçu
+        const credential = GoogleAuthProvider.credential(idToken);
+        const result = await signInWithCredential(auth, credential);
+
+        const userData = await getUserData(result.user);
+        setUserData(userData);
+      } else {
+        // En web, utiliser popup (fonctionne parfaitement)
+        const result = await signInWithPopup(auth, provider);
+        const userData = await getUserData(result.user);
+        setUserData(userData);
+      }
     } catch (error: any) {
       console.error('Erreur Google sign-in:', error);
       if (error?.code === 'auth/popup-blocked') {
