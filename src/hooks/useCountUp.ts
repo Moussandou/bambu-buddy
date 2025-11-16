@@ -5,10 +5,10 @@ import { useRef } from 'react';
 /**
  * Hook pour animer un nombre qui compte progressivement
  * @param end - Valeur finale
- * @param duration - Durée de l'animation en ms (défaut: 2000)
+ * @param duration - Durée de l'animation en ms (défaut: 4000)
  * @param start - Valeur de départ (défaut: 0)
  */
-export function useCountUp(end: number, duration = 2000, start = 0) {
+export function useCountUp(end: number, duration = 4000, start = 0) {
   const [count, setCount] = useState(start);
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true });
@@ -45,7 +45,7 @@ export function useCountUp(end: number, duration = 2000, start = 0) {
 /**
  * Hook pour animer un pourcentage
  */
-export function usePercentageCountUp(end: number, duration = 2000) {
+export function usePercentageCountUp(end: number, duration = 4000) {
   const { count, ref } = useCountUp(end, duration);
   return { value: `${count}%`, ref };
 }
@@ -53,7 +53,7 @@ export function usePercentageCountUp(end: number, duration = 2000) {
 /**
  * Hook pour animer une devise
  */
-export function useCurrencyCountUp(end: number, currency: string, duration = 2000) {
+export function useCurrencyCountUp(end: number, currency: string, duration = 4000) {
   const { count, ref } = useCountUp(end, duration);
 
   const formatted = new Intl.NumberFormat('fr-FR', {

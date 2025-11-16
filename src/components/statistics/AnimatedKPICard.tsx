@@ -36,10 +36,10 @@ export function AnimatedKPICard({
   };
 
   // Animated values based on type
-  const currencyCount = useCurrencyCountUp(type === 'currency' ? value : 0, currency, 2000);
-  const numberCount = useCountUp(type === 'number' ? value : 0, 2000);
-  const percentageCount = useCountUp(type === 'percentage' ? value : 0, 2000);
-  const hoursCount = useCountUp(type === 'hours' ? value : 0, 2000);
+  const currencyCount = useCurrencyCountUp(type === 'currency' ? value : 0, currency, 4000);
+  const numberCount = useCountUp(type === 'number' ? value : 0, 4000);
+  const percentageCount = useCountUp(type === 'percentage' ? value : 0, 4000);
+  const hoursCount = useCountUp(type === 'hours' ? value : 0, 4000);
 
   const getDisplayValue = () => {
     switch (type) {
