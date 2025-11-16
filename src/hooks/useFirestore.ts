@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import type {
   QueryConstraint,
 } from 'firebase/firestore';
@@ -30,9 +30,12 @@ export function useFirestoreCollection<T>(
     setLoading(true);
     const q = query(collection(db, collectionName), ...constraints);
 
+    console.log('[useFirestore] Setting up listener for:', collectionName);
+
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        console.log('[useFirestore] Snapshot received for:', collectionName, 'count:', snapshot.docs.length);
         const items = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -48,8 +51,11 @@ export function useFirestoreCollection<T>(
       }
     );
 
-    return unsubscribe;
-  }, [collectionName, constraints.length]);
+    return () => {
+      console.log('[useFirestore] Cleaning up listener for:', collectionName);
+      unsubscribe();
+    };
+  }, [collectionName]);
 
   return { data, loading, error };
 }
@@ -62,12 +68,46 @@ export function useUserCollection<T>(
   userId: string | undefined,
   additionalConstraints: QueryConstraint[] = []
 ) {
-  // Memoize constraints to prevent recreating them on every render
-  const constraints = useMemo(() => {
-    return userId
-      ? [where('userId', '==', userId), ...additionalConstraints]
-      : [];
-  }, [userId, additionalConstraints.length]);
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  return useFirestoreCollection<T>(collectionName, constraints);
+  useEffect(() => {
+    if (!collectionName || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const constraints = [where('userId', '==', userId), ...additionalConstraints];
+    const q = query(collection(db, collectionName), ...constraints);
+
+    console.log('[useUserCollection] Setting up listener for:', collectionName, 'userId:', userId);
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        console.log('[useUserCollection] Snapshot received for:', collectionName, 'count:', snapshot.docs.length);
+        const items = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as T[];
+        setData(items);
+        setLoading(false);
+        setError(null);
+      },
+      (err) => {
+        console.error(`Error fetching ${collectionName}:`, err);
+        setError(err as Error);
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      console.log('[useUserCollection] Cleaning up listener for:', collectionName);
+      unsubscribe();
+    };
+  }, [collectionName, userId]);
+
+  return { data, loading, error };
 }
