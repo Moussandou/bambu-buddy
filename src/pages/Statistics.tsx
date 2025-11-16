@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, TrendingUp, Package, DollarSign, Clock, Printer, FileText, Table2, FileSpreadsheet } from 'lucide-react';
+import { BarChart3, TrendingUp, Package, DollarSign, Clock, FileText, Table2, FileSpreadsheet } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { AnimatedKPICard } from '../components/statistics/AnimatedKPICard';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
@@ -21,7 +22,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { formatCurrency } from '../utils/calculations';
 import { exportJobsToPDF, exportJobsToExcel, exportJobsToCSV, exportStatisticsToPDF } from '../services/export';
 
 export function Statistics() {
@@ -153,14 +153,6 @@ export function Statistics() {
     },
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -223,75 +215,51 @@ export function Statistics() {
         animate="visible"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        {[
-          {
-            icon: DollarSign,
-            label: 'Profit total',
-            value: formatCurrency(stats.totalProfit, currency),
-            color: 'from-green-500 to-emerald-500',
-            trend: '+12%',
-          },
-          {
-            icon: TrendingUp,
-            label: 'Chiffre d\'affaires',
-            value: formatCurrency(stats.totalRevenue, currency),
-            color: 'from-blue-500 to-cyan-500',
-            trend: '+8%',
-          },
-          {
-            icon: Package,
-            label: 'Impressions vendues',
-            value: `${stats.soldJobs}`,
-            color: 'from-purple-500 to-pink-500',
-            trend: `${stats.completedJobs} total`,
-          },
-          {
-            icon: Clock,
-            label: 'Temps d\'impression',
-            value: `${Math.round(stats.totalPrintTime)}h`,
-            color: 'from-orange-500 to-red-500',
-            trend: `${Math.round(stats.totalPrintTime / 24)} jours`,
-          },
-          {
-            icon: Printer,
-            label: 'Filament favori',
-            value: (stats.mostUsedFilament as { name: string; grams: number } | null)?.name || 'Aucun',
-            color: 'from-indigo-500 to-purple-500',
-            trend: stats.mostUsedFilament ? `${Math.round((stats.mostUsedFilament as { name: string; grams: number }).grams)}g` : '',
-          },
-          {
-            icon: BarChart3,
-            label: 'ROI moyen',
-            value: stats.totalRevenue > 0
-              ? `${Math.round((stats.totalProfit / stats.totalCost) * 100)}%`
-              : '0%',
-            color: 'from-pink-500 to-rose-500',
-            trend: 'Retour sur investissement',
-          },
-        ].map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              whileHover={{ y: -5, scale: 1.02 }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                {stat.trend && (
-                  <span className="text-xs text-green-600 dark:text-green-400 font-semibold">
-                    {stat.trend}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-            </motion.div>
-          );
-        })}
+        <AnimatedKPICard
+          icon={DollarSign}
+          label="Profit total"
+          value={stats.totalProfit}
+          type="currency"
+          currency={currency}
+          gradient="from-green-500 to-emerald-500"
+          delay={0}
+        />
+        <AnimatedKPICard
+          icon={TrendingUp}
+          label="Chiffre d'affaires"
+          value={stats.totalRevenue}
+          type="currency"
+          currency={currency}
+          gradient="from-blue-500 to-cyan-500"
+          delay={0.1}
+        />
+        <AnimatedKPICard
+          icon={Package}
+          label="Impressions vendues"
+          value={stats.soldJobs}
+          type="number"
+          gradient="from-purple-500 to-pink-500"
+          trend={`${stats.completedJobs} total`}
+          delay={0.2}
+        />
+        <AnimatedKPICard
+          icon={Clock}
+          label="Temps d'impression"
+          value={Math.round(stats.totalPrintTime)}
+          type="hours"
+          gradient="from-orange-500 to-red-500"
+          trend={`${Math.round(stats.totalPrintTime / 24)} jours`}
+          delay={0.3}
+        />
+        <AnimatedKPICard
+          icon={BarChart3}
+          label="ROI moyen"
+          value={stats.totalRevenue > 0 ? Math.round((stats.totalProfit / stats.totalCost) * 100) : 0}
+          type="percentage"
+          gradient="from-pink-500 to-rose-500"
+          trend="Retour sur investissement"
+          delay={0.4}
+        />
       </motion.div>
 
       {/* Charts */}
