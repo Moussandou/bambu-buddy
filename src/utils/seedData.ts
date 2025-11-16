@@ -226,7 +226,7 @@ Résumé:
  * window.seedData()
  */
 if (typeof window !== 'undefined') {
-  (window as any).seedData = async () => {
+  (window as unknown as { seedData: () => Promise<void> }).seedData = async () => {
     const userId = prompt('Entre ton userId (récupéré depuis AuthContext):');
     if (!userId) {
       console.error('userId requis');

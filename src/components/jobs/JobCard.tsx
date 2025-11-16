@@ -48,36 +48,42 @@ export const JobCard = memo(function JobCard({
   const hasAutoCompleted = useRef(false);
 
   useEffect(() => {
-    if (job.state === 'en impression') {
-      const updateProgress = async () => {
-        const newProgress = calculatePrintProgress(job);
-        setProgress(newProgress);
-
-        // Auto-complete when reaching 100%
-        if (newProgress !== null && newProgress >= 100 && !hasAutoCompleted.current) {
-          hasAutoCompleted.current = true;
-          try {
-            await updateJobState(job.id, 'fini');
-            // Send notification
-            await notifyPrintComplete(job.title, job.id);
-          } catch (error) {
-            console.error('Error auto-completing job:', error);
-            hasAutoCompleted.current = false;
-          }
-        }
-      };
-
-      // Update immediately
-      updateProgress();
-
-      // Update every minute
-      const interval = setInterval(updateProgress, 60000);
-      return () => clearInterval(interval);
-    } else {
-      setProgress(null);
-      hasAutoCompleted.current = false;
+    // Reset if not in printing state
+    if (job.state !== 'en impression') {
+      if (progress !== null) {
+        setProgress(null);
+        hasAutoCompleted.current = false;
+      }
+      return;
     }
-  }, [job]);
+
+    // Update progress for printing jobs
+    const updateProgress = async () => {
+      const newProgress = calculatePrintProgress(job);
+      setProgress(newProgress);
+
+      // Auto-complete when reaching 100%
+      if (newProgress !== null && newProgress >= 100 && !hasAutoCompleted.current) {
+        hasAutoCompleted.current = true;
+        try {
+          await updateJobState(job.id, 'fini');
+          // Send notification
+          await notifyPrintComplete(job.title, job.id);
+        } catch (error) {
+          console.error('Error auto-completing job:', error);
+          hasAutoCompleted.current = false;
+        }
+      }
+    };
+
+    // Update immediately
+    updateProgress();
+
+    // Update every minute
+    const interval = setInterval(updateProgress, 60000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job.state, job.id, job.title, job.startedAt, job.printDuration_hours]);
 
   return (
     <Card

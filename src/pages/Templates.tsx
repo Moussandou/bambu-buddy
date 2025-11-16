@@ -46,8 +46,7 @@ export function Templates() {
   // Handlers
   async function handleCreateTemplate(
     data: TemplateFormData,
-    newImages: File[],
-    _existingImages: string[]
+    newImages: File[]
   ) {
     if (!userData) return;
 

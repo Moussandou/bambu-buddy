@@ -102,10 +102,12 @@ export function DataManagement() {
         for (const [collectionName, items] of Object.entries(importData.data)) {
           if (!Array.isArray(items)) continue;
 
-          for (const item of items as any[]) {
+          for (const item of items as Record<string, unknown>[]) {
+            // Remove id from item before importing
             const { id, ...data } = item;
             // Update userId to current user
             data.userId = userData.uid;
+            void id; // Mark as intentionally unused
             const docRef = doc(collection(db, collectionName));
             batch.set(docRef, data);
           }
