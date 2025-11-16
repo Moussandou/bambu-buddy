@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, TrendingUp, Package, DollarSign, Clock, Printer } from 'lucide-react';
+import { BarChart3, TrendingUp, Package, DollarSign, Clock, Printer, FileText, Table2, FileSpreadsheet } from 'lucide-react';
+import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserCollection } from '../hooks/useFirestore';
 import { COLLECTIONS } from '../lib/firebase';
@@ -21,6 +22,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatCurrency } from '../utils/calculations';
+import { exportJobsToPDF, exportJobsToExcel, exportJobsToCSV, exportStatisticsToPDF } from '../services/export';
 
 export function Statistics() {
   const { userData } = useAuth();
@@ -165,14 +167,53 @@ export function Statistics() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-          <BarChart3 className="w-8 h-8" />
-          Statistiques
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Analysez vos performances et optimisez votre production
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+            <BarChart3 className="w-8 h-8" />
+            Statistiques
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Analysez vos performances et optimisez votre production
+          </p>
+        </div>
+
+        {/* Export Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => exportStatisticsToPDF(stats, currency)}
+            variant="secondary"
+            className="flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Stats PDF
+          </Button>
+          <Button
+            onClick={() => exportJobsToPDF(jobs, filaments, currency)}
+            variant="secondary"
+            className="flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Jobs PDF
+          </Button>
+          <Button
+            onClick={() => exportJobsToExcel(jobs, filaments)}
+            variant="secondary"
+            className="flex items-center gap-2"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Excel
+          </Button>
+          <Button
+            onClick={() => exportJobsToCSV(jobs, filaments)}
+            variant="secondary"
+            className="flex items-center gap-2"
+          >
+            <Table2 className="w-4 h-4" />
+            CSV
+          </Button>
+        </div>
       </motion.div>
 
       {/* KPI Cards */}
