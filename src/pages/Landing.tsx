@@ -310,36 +310,77 @@ export function Landing({ onGetStarted }: LandingProps) {
         </motion.div>
       </div>
 
-      {/* Stats Section */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      {/* How it Works Section */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 bg-gray-50 dark:bg-gray-900/50">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial="hidden"
+          whileInView="visible"
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="bg-gradient-to-r from-primary-600 to-purple-600 rounded-3xl p-12 shadow-2xl"
+          variants={containerVariants}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <motion.div variants={itemVariants} className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              Comment ça marche ?
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">
+              Un workflow simple et intuitif pour gérer votre activité
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { value: '10k+', label: 'Impressions suivies' },
-              { value: '500+', label: 'Utilisateurs actifs' },
-              { value: '99%', label: 'Satisfaction client' },
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
-              >
-                <div className="text-5xl font-bold text-white mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-primary-100">
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
+              {
+                step: '1',
+                title: 'Gérez votre stock',
+                description: 'Ajoutez vos filaments, suivez les quantités restantes et les coûts en temps réel',
+                icon: Package,
+                color: 'from-blue-500 to-cyan-500',
+              },
+              {
+                step: '2',
+                title: 'Suivez vos impressions',
+                description: 'Organisez vos jobs avec un Kanban, calculez automatiquement les coûts et profits',
+                icon: Printer,
+                color: 'from-purple-500 to-pink-500',
+              },
+              {
+                step: '3',
+                title: 'Analysez vos résultats',
+                description: 'Consultez vos statistiques, exportez vos rapports et optimisez votre rentabilité',
+                icon: TrendingUp,
+                color: 'from-green-500 to-emerald-500',
+              },
+            ].map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <motion.div
+                  key={index}
+                  variants={itemVariants}
+                  className="relative"
+                >
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 h-full">
+                    <div className="flex items-center justify-center mb-6">
+                      <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center text-white text-2xl font-bold shadow-lg`}>
+                        {step.step}
+                      </div>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4 mx-auto shadow-lg`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 text-center">
+                      {step.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-center">
+                      {step.description}
+                    </p>
+                  </div>
+                  {/* Connector line */}
+                  {index < 2 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-primary-300 to-purple-300 dark:from-primary-700 dark:to-purple-700" />
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
       </div>
@@ -356,17 +397,22 @@ export function Landing({ onGetStarted }: LandingProps) {
             Prêt à optimiser votre production ?
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Rejoignez des centaines de makers qui ont transformé leur activité avec Bambu Buddy
+            Commencez gratuitement dès maintenant et prenez le contrôle de votre activité d'impression 3D
           </p>
-          <Button
-            onClick={onGetStarted}
-            className="group px-8 py-4 text-lg"
-          >
-            <span className="flex items-center gap-2">
-              Commencer maintenant
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button
+              onClick={onGetStarted}
+              className="group px-8 py-4 text-lg"
+            >
+              <span className="flex items-center gap-2">
+                Commencer maintenant
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </Button>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Aucune carte bancaire requise • 100% gratuit
+            </p>
+          </div>
         </motion.div>
       </div>
     </div>

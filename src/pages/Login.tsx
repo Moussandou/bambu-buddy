@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Printer } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Printer, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 
 export function Login() {
+  const navigate = useNavigate();
   const { signIn, signUp, signInWithGoogle, resetPassword } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -15,6 +17,7 @@ export function Login() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,8 +73,22 @@ export function Login() {
     setSuccess('');
   }
 
+  const handleBackToLanding = () => {
+    localStorage.removeItem('hasSeenLanding');
+    navigate('/welcome');
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700 p-4 relative">
+      {/* Back to landing button */}
+      <button
+        onClick={handleBackToLanding}
+        className="absolute top-4 left-4 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors backdrop-blur-sm"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="hidden sm:inline">Retour à l'accueil</span>
+      </button>
+
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -114,14 +131,28 @@ export function Login() {
 
             {!isForgotPassword && (
               <div>
-                <Input
-                  label="Mot de passe"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <Input
+                    label="Mot de passe"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
                 {!isSignUp && (
                   <button
                     type="button"
