@@ -43,14 +43,27 @@ function generateNonce(): string {
  */
 function parseCallbackUrl(url: string): { idToken?: string; accessToken?: string; error?: string } {
   try {
+    console.log('[OAuth] Parsing callback URL:', url);
+
     const hashParams = new URLSearchParams(url.split('#')[1] || '');
 
+    const idToken = hashParams.get('id_token') || undefined;
+    const accessToken = hashParams.get('access_token') || undefined;
+    const error = hashParams.get('error') || undefined;
+
+    console.log('[OAuth] Parsed tokens:', {
+      hasIdToken: !!idToken,
+      hasAccessToken: !!accessToken,
+      error
+    });
+
     return {
-      idToken: hashParams.get('id_token') || undefined,
-      accessToken: hashParams.get('access_token') || undefined,
-      error: hashParams.get('error') || undefined,
+      idToken,
+      accessToken,
+      error,
     };
   } catch (error) {
+    console.error('[OAuth] Parse error:', error);
     return { error: 'Failed to parse callback URL' };
   }
 }

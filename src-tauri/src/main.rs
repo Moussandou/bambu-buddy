@@ -30,24 +30,58 @@ async fn start_oauth_server() -> Result<u16, String> {
 
     let state = OAUTH_STATE.clone();
 
+    let state_for_callback = state.clone();
     let callback = warp::path("callback")
-        .and(warp::query::<std::collections::HashMap<String, String>>())
-        .map(move |params: std::collections::HashMap<String, String>| {
-            // Construire l'URL complète avec les paramètres
-            let url_params: Vec<String> = params.iter()
-                .map(|(k, v)| format!("{}={}", k, v))
-                .collect();
-            let callback_url = format!("http://localhost:8765/callback?{}", url_params.join("&"));
-
-            // Stocker dans le state
-            if let Ok(mut state) = state.lock() {
-                state.callback_url = Some(callback_url);
-            }
-
-            warp::reply::html("<html><body><h1>Authentication successful!</h1><p>You can close this window and return to the app.</p></body></html>")
+        .map(move || {
+            warp::reply::html(r#"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        h1 { color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <h1>Authentication successful!</h1>
+    <p>You can close this window and return to the app.</p>
+    <script>
+        // Extraire les paramètres du fragment (#)
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            // Envoyer le fragment au serveur via une requête POST
+            fetch('/store_token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fragment: hash })
+            }).then(() => {
+                console.log('Token stored successfully');
+            }).catch(err => {
+                console.error('Error storing token:', err);
+            });
+        }
+    </script>
+</body>
+</html>
+            "#)
         });
 
-    let routes = callback;
+    let state_for_store = state.clone();
+    let store_token = warp::path("store_token")
+        .and(warp::post())
+        .and(warp::body::json())
+        .map(move |body: serde_json::Value| {
+            if let Some(fragment) = body.get("fragment").and_then(|v| v.as_str()) {
+                let callback_url = format!("http://localhost:8765/callback#{}", fragment);
+                if let Ok(mut state) = state_for_store.lock() {
+                    state.callback_url = Some(callback_url);
+                }
+            }
+            warp::reply::json(&serde_json::json!({"status": "ok"}))
+        });
+
+    let routes = callback.or(store_token);
 
     let server = warp::serve(routes).run(([127, 0, 0, 1], port));
 
