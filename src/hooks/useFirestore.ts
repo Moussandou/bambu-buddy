@@ -50,7 +50,8 @@ export function useFirestoreCollection<T>(
     return () => {
       unsubscribe();
     };
-  }, [collectionName, constraints]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectionName]);
 
   return { data, loading, error };
 }
@@ -97,7 +98,8 @@ export function useUserCollection<T>(
     return () => {
       unsubscribe();
     };
-  }, [collectionName, userId, additionalConstraints]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectionName, userId]);
 
   return { data, loading, error };
 }
