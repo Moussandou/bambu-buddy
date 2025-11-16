@@ -11,7 +11,7 @@ const OAUTH_CONFIG = {
   clientId: import.meta.env.VITE_FIREBASE_CLIENT_ID || '',
   redirectUri: 'http://localhost:8765/callback',
   scope: 'openid email profile',
-  responseType: 'token id_token',
+  responseType: 'code', // Authorization Code flow pour Desktop app
 };
 
 /**
@@ -41,31 +41,67 @@ function generateNonce(): string {
 /**
  * Parse les paramètres de l'URL de callback
  */
-function parseCallbackUrl(url: string): { idToken?: string; accessToken?: string; error?: string } {
+function parseCallbackUrl(url: string): { code?: string; error?: string } {
   try {
     console.log('[OAuth] Parsing callback URL:', url);
 
-    const hashParams = new URLSearchParams(url.split('#')[1] || '');
+    // Pour Authorization Code flow, les paramètres sont dans la query string, pas le fragment
+    const urlObj = new URL(url);
+    const code = urlObj.searchParams.get('code') || undefined;
+    const error = urlObj.searchParams.get('error') || undefined;
 
-    const idToken = hashParams.get('id_token') || undefined;
-    const accessToken = hashParams.get('access_token') || undefined;
-    const error = hashParams.get('error') || undefined;
-
-    console.log('[OAuth] Parsed tokens:', {
-      hasIdToken: !!idToken,
-      hasAccessToken: !!accessToken,
+    console.log('[OAuth] Parsed params:', {
+      hasCode: !!code,
       error
     });
 
     return {
-      idToken,
-      accessToken,
+      code,
       error,
     };
   } catch (error) {
     console.error('[OAuth] Parse error:', error);
     return { error: 'Failed to parse callback URL' };
   }
+}
+
+/**
+ * Échange le code d'autorisation contre un ID token
+ */
+async function exchangeCodeForToken(code: string): Promise<string> {
+  const tokenEndpoint = 'https://oauth2.googleapis.com/token';
+
+  const body = new URLSearchParams({
+    code,
+    client_id: OAUTH_CONFIG.clientId,
+    redirect_uri: OAUTH_CONFIG.redirectUri,
+    grant_type: 'authorization_code',
+  });
+
+  console.log('[OAuth] Exchanging code for token...');
+
+  const response = await fetch(tokenEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: body.toString(),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[OAuth] Token exchange failed:', errorText);
+    throw new Error(`Token exchange failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log('[OAuth] Token exchange successful');
+
+  if (!data.id_token) {
+    throw new Error('No ID token in response');
+  }
+
+  return data.id_token;
 }
 
 /**
@@ -100,14 +136,20 @@ export async function startOAuthFlow(): Promise<string> {
             clearInterval(checkInterval);
             await invoke('stop_oauth_server');
 
-            const { idToken, error } = parseCallbackUrl(result);
+            const { code, error } = parseCallbackUrl(result);
 
             if (error) {
               reject(new Error(`OAuth error: ${error}`));
-            } else if (idToken) {
-              resolve(idToken);
+            } else if (code) {
+              // Échanger le code contre un ID token
+              try {
+                const idToken = await exchangeCodeForToken(code);
+                resolve(idToken);
+              } catch (err: any) {
+                reject(new Error(`Token exchange failed: ${err.message}`));
+              }
             } else {
-              reject(new Error('No ID token received'));
+              reject(new Error('No authorization code received'));
             }
           }
         } catch (err) {
