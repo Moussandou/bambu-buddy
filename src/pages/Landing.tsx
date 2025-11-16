@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Printer, TrendingUp, Package, DollarSign, ChevronRight, Sparkles, BarChart3, Bell } from 'lucide-react';
+import { Printer, TrendingUp, Package, DollarSign, ChevronRight, Sparkles, BarChart3, Bell, Download, Globe, Apple, Monitor } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 interface LandingProps {
@@ -246,6 +246,107 @@ export function Landing({ onGetStarted }: LandingProps) {
             />
           </motion.div>
         </div>
+      </div>
+
+      {/* Download Section */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-gray-800 dark:to-gray-700">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+          className="text-center"
+        >
+          <motion.div variants={itemVariants} className="mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Téléchargez Bambu Buddy
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Disponible sur toutes vos plateformes préférées
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
+          >
+            {/* Web App */}
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100 dark:border-gray-700"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <Globe className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Application Web</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Accédez depuis n'importe quel navigateur
+              </p>
+              <Button
+                onClick={() => window.open('https://bambu-buddy.web.app', '_blank')}
+                variant="secondary"
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Globe className="w-4 h-4" />
+                Ouvrir l'app
+              </Button>
+            </motion.div>
+
+            {/* macOS */}
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100 dark:border-gray-700"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                <Apple className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">macOS</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Application native pour Mac
+              </p>
+              <Button
+                onClick={() => window.open('https://github.com/moussandou/bambu-buddy/releases/latest', '_blank')}
+                variant="secondary"
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Télécharger .dmg
+              </Button>
+            </motion.div>
+
+            {/* Windows */}
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all border border-gray-100 dark:border-gray-700"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
+                <Monitor className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Windows</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Application native pour PC
+              </p>
+              <Button
+                onClick={() => window.open('https://github.com/moussandou/bambu-buddy/releases/latest', '_blank')}
+                variant="secondary"
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Télécharger .exe
+              </Button>
+            </motion.div>
+          </motion.div>
+
+          <motion.p
+            variants={itemVariants}
+            className="mt-8 text-sm text-gray-500 dark:text-gray-400"
+          >
+            Toutes les versions sont gratuites et open-source
+          </motion.p>
+        </motion.div>
       </div>
 
       {/* Features Section */}
