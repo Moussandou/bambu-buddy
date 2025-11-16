@@ -3,14 +3,13 @@
 // ============================================
 
 import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
 
 /**
  * Configuration OAuth pour Google
  */
 const OAUTH_CONFIG = {
   clientId: import.meta.env.VITE_FIREBASE_CLIENT_ID || '',
-  redirectUri: 'bambubuddy://auth-callback',
+  redirectUri: 'http://localhost:8765/callback',
   scope: 'openid email profile',
   responseType: 'token id_token',
 };
@@ -58,44 +57,53 @@ function parseCallbackUrl(url: string): { idToken?: string; accessToken?: string
 
 /**
  * Démarre le flux OAuth avec le navigateur système
- * Retourne une promesse qui se résout avec le token ID
+ * Utilise un serveur local temporaire pour capturer le callback
  */
 export async function startOAuthFlow(): Promise<string> {
   return new Promise(async (resolve, reject) => {
     try {
-      // Écouter les événements de callback
-      const unlisten = await listen('deep-link://urls', (event: any) => {
-        const urls = event.payload as string[];
-
-        if (urls && urls.length > 0) {
-          const callbackUrl = urls[0];
-
-          // Parser l'URL de callback
-          const { idToken, error } = parseCallbackUrl(callbackUrl);
-
-          unlisten();
-
-          if (error) {
-            reject(new Error(`OAuth error: ${error}`));
-          } else if (idToken) {
-            resolve(idToken);
-          } else {
-            reject(new Error('No ID token received'));
-          }
-        }
-      });
+      // Démarrer un serveur local pour capturer le callback
+      const server = await invoke<number>('start_oauth_server');
+      console.log('[OAuth] Server started on port:', server);
 
       // Générer l'URL OAuth et ouvrir le navigateur
       const oauthUrl = generateOAuthUrl();
+      console.log('[OAuth] Opening browser with URL:', oauthUrl);
       await invoke('open_oauth_url', { url: oauthUrl });
 
-      // Timeout après 5 minutes
-      setTimeout(() => {
-        unlisten();
+      // Attendre le résultat du serveur (timeout 5min)
+      const timeoutId = setTimeout(() => {
+        invoke('stop_oauth_server');
         reject(new Error('OAuth timeout - user did not complete authentication'));
       }, 5 * 60 * 1000);
 
+      // Polling pour vérifier si on a reçu le token
+      const checkInterval = setInterval(async () => {
+        try {
+          const result = await invoke<string | null>('get_oauth_result');
+
+          if (result) {
+            clearTimeout(timeoutId);
+            clearInterval(checkInterval);
+            await invoke('stop_oauth_server');
+
+            const { idToken, error } = parseCallbackUrl(result);
+
+            if (error) {
+              reject(new Error(`OAuth error: ${error}`));
+            } else if (idToken) {
+              resolve(idToken);
+            } else {
+              reject(new Error('No ID token received'));
+            }
+          }
+        } catch (err) {
+          // Continue polling
+        }
+      }, 500);
+
     } catch (error) {
+      console.error('[OAuth] Error in startOAuthFlow:', error);
       reject(error);
     }
   });

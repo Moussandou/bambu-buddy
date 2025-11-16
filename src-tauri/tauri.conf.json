@@ -29,14 +29,14 @@
     "targets": ["app", "dmg"],
     "icon": [
       "icons/icon.png"
-    ]
-  },
-  "plugins": {
-    "deep-link": {
-      "mobile": [],
-      "desktop": {
-        "schemes": ["bambubuddy"]
-      }
+    ],
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13",
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "providerShortName": null,
+      "entitlements": null
     }
   }
 }

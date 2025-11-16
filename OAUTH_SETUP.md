@@ -30,8 +30,10 @@ com.moussandou.bambubuddy
 
 **Authorized redirect URIs** :
 ```
-bambubuddy://auth-callback
+http://localhost:8765/callback
 ```
+
+**Note** : Pour l'app desktop, on utilise un serveur local temporaire au lieu d'un deep link, car c'est plus simple et plus compatible.
 
 ### 3. Récupérer le Client ID
 
@@ -68,11 +70,13 @@ Remplacez `your-client-id.apps.googleusercontent.com` par votre vrai Client ID.
 
 ### Version Desktop (Tauri)
 1. L'utilisateur clique sur "Continuer avec Google"
-2. Le navigateur par défaut du système s'ouvre avec l'URL OAuth Google
-3. L'utilisateur s'authentifie dans son navigateur
-4. Google redirige vers `bambubuddy://auth-callback?id_token=...`
-5. L'app desktop capture ce deep link
-6. Le token est utilisé pour authentifier l'utilisateur dans Firebase
+2. L'app démarre un serveur HTTP local sur le port 8765
+3. Le navigateur par défaut du système s'ouvre avec l'URL OAuth Google
+4. L'utilisateur s'authentifie dans son navigateur
+5. Google redirige vers `http://localhost:8765/callback?id_token=...`
+6. Le serveur local capture le callback et extrait le token
+7. Le token est utilisé pour authentifier l'utilisateur dans Firebase
+8. Le serveur local s'arrête automatiquement
 
 ## Structure du code
 
@@ -82,9 +86,11 @@ Remplacez `your-client-id.apps.googleusercontent.com` par votre vrai Client ID.
 
 ### Backend (Rust/Tauri)
 - **`src-tauri/src/main.rs`** :
-  - Commande `open_oauth_url` pour ouvrir le navigateur
-  - Listener pour les deep links `bambubuddy://`
-- **`src-tauri/tauri.conf.json`** : Configuration du deep link scheme
+  - Commande `open_oauth_url` : Ouvre le navigateur système
+  - Commande `start_oauth_server` : Démarre un serveur HTTP local
+  - Commande `get_oauth_result` : Récupère le token capturé
+  - Commande `stop_oauth_server` : Arrête le serveur
+- **`src-tauri/Cargo.toml`** : Dépendances (warp, tokio pour le serveur HTTP)
 
 ## Tester localement
 
@@ -106,10 +112,10 @@ npm run tauri:dev
 - Vérifiez que le plugin `tauri-plugin-shell` est bien installé
 - Vérifiez les logs de la console Tauri
 
-### Le deep link ne fonctionne pas
-- Sur macOS : L'app doit être construite et installée pour enregistrer le URL scheme
-- En dev : Certains deep links peuvent ne pas fonctionner, utilisez email/password
-- Vérifiez que `bambubuddy://` est bien configuré dans `tauri.conf.json`
+### Le serveur local ne démarre pas
+- Vérifiez que le port 8765 est disponible (pas utilisé par une autre app)
+- Sur macOS/Linux, vérifiez les permissions réseau
+- Regardez les logs Tauri pour voir les erreurs du serveur
 
 ### Erreur "Client ID not found"
 - Vérifiez que `VITE_FIREBASE_CLIENT_ID` est dans `.env.local`
@@ -117,15 +123,17 @@ npm run tauri:dev
 
 ### L'authentification échoue
 - Vérifiez que le Client ID OAuth correspond bien à celui dans Google Cloud Console
-- Vérifiez que `bambubuddy://auth-callback` est dans les redirect URIs autorisées
+- Vérifiez que `http://localhost:8765/callback` est dans les redirect URIs autorisées
 - Regardez les logs de la console pour voir le token reçu
+- Assurez-vous que le navigateur peut accéder à localhost (pas de proxy bloquant)
 
 ## Notes de sécurité
 
 - Le Client ID OAuth peut être public (il est dans le code de l'app)
-- Le deep link `bambubuddy://` ne peut être intercepté que par l'app Bambu Buddy
+- Le serveur local (localhost:8765) n'accepte que les connexions locales
 - Le nonce aléatoire protège contre les attaques CSRF
 - Les tokens sont uniquement stockés en mémoire, jamais persistés
+- Le serveur s'arrête automatiquement après avoir reçu le callback
 
 ## Ressources
 
