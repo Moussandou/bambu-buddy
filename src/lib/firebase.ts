@@ -43,11 +43,16 @@ export const auth = getAuth(app);
 
 // Initialize Firestore with persistent cache (nouvelle méthode, pas de dépréciation)
 // Cette configuration remplace enableIndexedDbPersistence()
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
-});
+// Désactiver le cache persistent dans Tauri pour éviter les problèmes
+const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
+
+export const db = isTauri
+  ? initializeFirestore(app, {}) // Pas de cache persistent dans Tauri
+  : initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
+    });
 
 // Initialize Storage
 export const storage = getStorage(app);
