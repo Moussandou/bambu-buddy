@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg?logo=typescript)](https://www.typescriptlang.org)
 [![Tauri](https://img.shields.io/badge/Tauri-2.5-ffc131.svg?logo=tauri)](https://tauri.app)
 
-[🌐 Version Web](#) • [🍎 macOS](#) • [🪟 Windows](#) • [📖 Documentation](#features)
+[🌐 Version Web](https://bambu-buddy.web.app/welcome) • [🍎 macOS](https://github.com/moussandou/bambu-buddy/releases) • [🪟 Windows](https://github.com/moussandou/bambu-buddy/releases) • [📖 Documentation](#features)
 
 </div>
 
